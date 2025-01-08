@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3NN3twork APP</title>
+  
+  <!-- Link to the external CSS file -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+</head>
+<body>
+   
+    <div id="app">
+        <label for="theme" class="theme">
+            <span class="theme__toggle-wrap">
+                <input id="theme" class="theme__toggle" type="checkbox" role="switch" name="theme" value="dark">
+                <span class="theme__fill"></span>
+                <span class="theme__icon">
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                    <span class="theme__icon-part"></span>
+                </span>
+            </span>
+        </label>
+
+
+        <div id="login-section" class="form-container">
+      
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="Enter your username" required="" />
+        </div>
+        <div class="form-group">
+          <label for="textarea">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" required="" />
+        </div>
+        <button class="form-submit-btn"  onclick="login()">Login</button>
+        <button class="form-submit-btn"  onclick="toggleSignupForm()">SignUp</button>
+    
+    </div>
+
+      
+        <!-- Login Section 
+        <div id="login-section">
+          <h2>Login</h2>
+          <input type="text" id="username" placeholder="Username" />
+          <input type="password" id="password" placeholder="Password" />
+          <button onclick="login()">Login</button>
+          <button onclick="toggleSignupForm()">Sign Up</button>
+        </div> -->
+      
+        <!-- Signup Section (Hidden by Default) -->
+        <!-- <div id="signup-section" class="hidden">
+            <h2>Sign Up</h2>
+            <input type="text" id="signup-username" placeholder="Username" />
+            <input type="password" id="signup-password" placeholder="Password" />
+            <select id="signup-role">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+            
+            <button onclick="signup()">Sign Up</button>
+            <button onclick="toggleSignupForm()">Cancel</button>
+          </div>
+       -->
+
+
+
+         
+          <div id="signup-section" class="form-container hidden">
+      
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="signup-username" placeholder="Enter your username" required="" />
+            </div>
+            <div class="form-group">
+              <label for="textarea">Password</label>
+              <input type="password" id="signup-password" placeholder="Enter your password" required="" />
+            </div>
+            <div class="form-group">
+              <label for="textarea">Role</label>
+              <select id="signup-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button class="form-submit-btn"  onclick="signup()">SignUp</button>
+            <button class="form-submit-btn"  onclick="toggleSignupForm()">Login</button>
+        
+            </div>    
+        
+
+        <!-- Dashboard -->
+        <div id="dashboard" style="display: none;">
+
+          <h3>Welcome to Your Dashboard</h3>
+          <div id="profiles-list" class="profiles-grid">
+            <!-- Profiles will be dynamically populated here -->
+          </div>
+
+          <!-- Add Profile Button -->
+
+
+<!-- Add Profile Modal -->
+<div id="add-profile-modal" class="modal" style="display: none;">
+    
+  <div class="modal-content">
+    <span class="modal-header">
+      <h2>Add Profile</h2>
+      <button id="close-profile-modal" onclick="closeAddProfileModal()">X</button>
+    </span>
+    <div class="modal-body">
+      <input type="text" id="profile-name" placeholder="Profile Name" />
+      <textarea id="profile-description" placeholder="Profile Description"></textarea>
+      <select id="profile-type">
+        <option value="personal">Personal</option>
+        <option value="business">Business</option>
+      </select>
+      <input type="file" id="profile-picture" />
+    </div>
+    <div class="modal-footer">
+      <button onclick="addProfile()">Add Profile</button>
+    </div>
+  </div>
+</div>
+
+
+
+          <!-- Post Creation Section -->
+          <!-- <div id="create-post-section">
+              <h4>Create a Post</h4>
+              <input type="text" id="post-category" placeholder="Category (e.g., Work, Personal)" />
+              <textarea id="post-content" placeholder="What's on your mind?"></textarea>
+              <button onclick="createPost()">Post</button>
+          </div> -->
+      
+          <!-- Posts Section -->
+          <!-- <div id="posts-section">
+              <button onclick="fetchPosts()">Reload Posts</button>
+
+              <h3>All Posts</h3>
+              <div id="posts-list">
+                   Posts will be dynamically rendered here 
+              </div>
+          </div> -->
+          <button id="add-profile-button" class="buttons" onclick="openAddProfileModal()">➕</button>
+          <button id="logout-button" class="buttons" onclick="logout()">
+            <div class="sign"><svg viewBox="0 0 512 512"><path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"></path></svg></div>    
+            <div class="text">Logout</div>
+        </button>
+        
+            
+
+
+          <button id="chats-button" class="buttons" onclick= "toggleChatModal()">
+            <div tabindex="0" class="burger">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  height="20"
+                  width="20"
+                  xmlns="http://www.w3.org/2000/svg"><path
+                d="M12 2c2.757 0 5 2.243 5 5.001 0 2.756-2.243 5-5 5s-5-2.244-5-5c0-2.758 2.243-5.001 5-5.001zm0-2c-3.866 0-7 3.134-7 7.001 0 3.865 3.134 7 7 7s7-3.135 7-7c0-3.867-3.134-7.001-7-7.001zm6.369 13.353c-.497.498-1.057.931-1.658 1.302 2.872 1.874 4.378 5.083 4.972 7.346h-19.387c.572-2.29 2.058-5.503 4.973-7.358-.603-.374-1.162-.811-1.658-1.312-4.258 3.072-5.611 8.506-5.611 10.669h24c0-2.142-1.44-7.557-5.631-10.647z"
+              ></path></svg></div>
+                <div class="text">Users</div>
+                <!-- <span id="chat-notification">0</span> -->
+        </button>
+        <button id="chat-toggle-button" class="buttons" onclick="toggleChat()">💬</button>
+          <!-- Users Modal -->
+          <div id="chat-modal" style="display: none;">
+            <div class="modal-header">
+                
+                <button id="minimise-users" onclick="minimiseUsers()">-</button>
+                <button id="close-users" onclick="closeUsers()">X</button>
+            </div>
+            <h3>Chat with</h3>
+            <div id="users-list"></div>
+        </div> 
+          
+      </div>
+      <div id="chat" class="hidden" style="display: none;">
+        <div id="chat-modal-container">
+            <div class="modal-header">
+                <h3>Chat with <span id="chat-username">No user selected</span></h3>
+                <button id="minimise-chat" onclick="minimiseChat()">-</button>
+                <button id="close-modal" onclick="closeChatModal()">X</button>
+            </div>
+            <div id="chat-messages-container" style="border: 1px solid #ccc; height: 300px; overflow-y: auto; margin-bottom: 10px;">
+                <!-- Messages will dynamically appear here -->
+            </div>
+            <textarea id="chat-input" placeholder="Type your message"></textarea>
+            <button id="send-message" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+    
+       
+
+    </div>
+    
+  <script>
+  let token = null;
+  let selectedUser = null; // Ensure this is defined first
+  const socket = io('http://localhost:5000'); // Ensure Socket.IO is initialized correctly
+
+  // Listen for incoming messages
+  
+
+
+
+
+async function login() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        const response = await fetch('http://localhost:5000/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to log in');
+
+        // Save token and switch UI to dashboard
+        token = data.token;
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+       
+
+        const userId = getUserIdFromToken(token);
+
+        // Join room and fetch users
+        socket.emit('join_room', userId);
+        console.log(`User ${userId} joined room ${userId}`);
+       
+        // Fetch posts after successful login
+        // await fetchPosts();
+        //fetch profiles after successful login 
+        await fetchProfiles();
+
+        // Reinitialize WebSocket listeners
+        setupSocketListeners();
+
+    } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || 'Login failed.');
+    }
+}
+
+function setupSocketListeners() {
+    socket.off('receive_message'); // Remove existing listeners first
+
+    socket.on('receive_message', (message) => {
+    console.log('Message received:', message);
+
+    const chatModal = document.getElementById('chat');
+    if (!chatModal || chatModal.style.display === 'none') {
+        console.error('Chat modal is not visible or missing!');
+        return;
+    }
+
+    const chatMessages = document.getElementById('chat-messages-container');
+    if (!chatMessages) {
+        console.error('Chat messages container not found!');
+        return;
+    }
+
+    if (selectedUser && selectedUser._id === message.senderId) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chat-bubble', 'received');
+        messageElement.innerText = message.content;
+
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    } else {
+        console.warn('Message not for the selected user or no user selected.');
+    }
+});
+
+
+    socket.on('user_logged_out', ({ userId }) => {
+        console.log(`User ${userId} logged out`);
+
+        const userElements = document.getElementById('users').children;
+        for (const userElement of userElements) {
+            if (userElement.dataset.userId === userId) {
+                userElement.style.color = 'gray';
+                userElement.innerText = `${userElement.innerText.split('(')[0]} (Offline)`;
+            }
+        }
+
+        if (selectedUser && selectedUser._id === userId) {
+            const chatModal = document.getElementById('chat-modal');
+            chatModal.style.display = 'none';
+            const chatMessages = document.getElementById('modal-chat-messages');
+            chatMessages.innerHTML = '';
+            selectedUser = null;
+            closeChat();
+        }
+    });
+}
+
+   
+
+    async function logout() {
+    try {
+        const userId = getUserIdFromToken(token);
+
+        const response = await fetch('http://localhost:5000/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ userId }),
+        });
+
+        if (!response.ok) throw new Error('Failed to log out');
+
+        // Reset UI
+        token = null;
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('login-section').style.display = 'block';
+        // document.getElementById('open-users-modal').style.display = 'none';
+
+ 
+        closeChatModal();
+
+        selectedUser = null;
+
+        alert('You have been logged out.');
+    } catch (error) {
+        console.error('Logout error:', error);
+        alert(error.message || 'Logout failed.');
+    }
+}
+
+    function getUserIdFromToken(token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.id;
+    }
+    async function signup() {
+        const username = document.getElementById('signup-username').value;
+        const password = document.getElementById('signup-password').value;
+        const role = document.getElementById('signup-role').value;
+
+        const response = await fetch('http://localhost:5000/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, role }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message);
+            toggleSignupForm(); // Hide the signup form after successful signup
+        } else {
+            alert(data.message || 'Error signing up');
+        }
+        }
+
+    function toggleSignupForm() {
+        const loginSection = document.getElementById('login-section');
+        const signupSection = document.getElementById('signup-section');
+
+        if (signupSection.classList.contains('hidden')) {
+            // Remove the hidden class to prepare for fade-in
+            signupSection.classList.remove('hidden');
+            signupSection.classList.remove('fade-out');
+            signupSection.classList.add('fade-in');
+            loginSection.classList.add('hidden');
+            loginSection.classList.add('fade-out');
+        } else {
+            // Start the fade-out animation
+            signupSection.classList.remove('fade-in');
+            signupSection.classList.add('fade-out');
+
+            loginSection.classList.remove('fade-out');
+            loginSection.classList.add('fade-in');
+
+            // Wait for the animation to finish, then hide the element
+            setTimeout(() => {
+            signupSection.classList.add('hidden');
+            loginSection.classList.remove('hidden');
+            }, 500); 
+        }
+    }
+
+
+        async function fetchUsers() {
+            try {
+                const response = await fetch('http://localhost:5000/users', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch users');
+
+                const users = await response.json();
+                console.log('Fetched users:', users);
+
+            
+                renderUsersModal(users); // Render for chat modal
+
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                alert('Could not load users. Please try again.');
+            }
+}
+
+
+
+function renderUsersModal(users) {
+    const usersList = document.getElementById('users-list');
+    usersList.innerHTML = ''; // Clear the modal user list
+
+    users.forEach(user => {
+        const userItem = document.createElement('div');
+        userItem.className = 'user-item';
+        userItem.innerText = user.username;
+
+        // Add event listener to open a chat with the user
+        userItem.addEventListener('click', () => openChat(user));
+
+        // Append the user to the users list in the modal
+        usersList.appendChild(userItem);
+    });
+}
+
+
+async function createPost() {
+    const category = document.getElementById('post-category').value;
+    const content = document.getElementById('post-content').value;
+
+    if (!category || !content) {
+        alert('Both category and content are required');
+        return;
+    }
+
+    try {
+        console.log('JWT token being sent:', token); // Debugging: Ensure token is being sent
+
+        const response = await fetch('http://localhost:5000/diary/post', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`, 
+            },
+            body: JSON.stringify({ category, content }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create post');
+        }
+
+        const post = await response.json();
+        alert('Post created successfully!');
+        console.log('Created Post:', post);
+
+        // Reload posts
+        fetchPosts();
+    } catch (error) {
+        console.error('Error creating post:', error);
+        alert('Failed to create post. Please try again.');
+    }
+}
+
+
+
+
+async function fetchPosts() {
+    try {
+        const response = await fetch('http://localhost:5000/diary/posts', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch posts');
+        }
+
+        const posts = await response.json();
+        console.log('Fetched posts:', posts);
+        renderPosts(posts);
+    } catch (error) {
+        console.error('Error fetching posts:', error);
+    }
+}
+
+// Function to toggle chat modal
+function toggleChatModal() {
+    const chatModal = document.getElementById('chat-modal');
+    if (chatModal.style.display === 'block') {
+        chatModal.style.display = 'none'; // Hide the modal
+    } else {
+        chatModal.style.display = 'block'; // Show the modal
+        fetchUsers(); 
+    }
+}
+
+
+
+
+function renderPosts(posts) {
+    const postsList = document.getElementById('posts-list');
+    postsList.innerHTML = ''; // Clear existing posts
+
+    if (!posts || posts.length === 0) {
+        postsList.innerHTML = '<p>No posts available.</p>';
+        return;
+    }
+
+    posts.forEach((post) => {
+        const postElement = document.createElement('div');
+        postElement.className = 'post';
+        postElement.innerHTML = `
+            <h4>${post.title}</h4>
+            <p>${post.content}</p>
+            <small>Category: ${post.category}</small>
+            <small>Posted by: ${post.userId.username || 'Unknown'}</small>
+            <hr />
+        `;
+        postsList.appendChild(postElement);
+    });
+}
+
+
+
+
+
+
+
+function openUsersModal() {
+    const usersModal = document.getElementById('users-modal');
+    usersModal.style.display = 'block';
+}
+
+function closeUsers() {
+    const usersModal = document.getElementById('chat-modal');
+    usersModal.style.display = 'none';
+}
+function minimiseUsers() {
+    const usersModal = document.getElementById("chat-modal");
+    
+    usersModal.style.display = usersModal.style.display === "none" ? "block" : "none";
+   
+}
+
+
+
+// Helper function to create a single user element
+function createUserElement(user) {
+  const userElement = document.createElement('div');
+  userElement.className = 'user-item';
+  userElement.dataset.userId = user._id; // Use data-* attribute for the user ID
+  userElement.innerText = `${user.username} (${user.role}) - ${user.isOnline ? 'Online' : 'Offline'}`;
+  userElement.classList.add(user.isOnline ? 'online' : 'offline'); // Add a class for styling
+
+  userElement.addEventListener('click', () => selectUser(user)); // Add click event
+
+  return userElement;
+}
+
+
+function selectUser(user) {
+  selectedUser = user;
+  console.log('Selected user:', selectedUser); // Confirm user selection
+  const chatModal = document.getElementById('chat-modal');
+  const chatUsername = document.getElementById('modal-chat-username');
+  const chatMessages = document.getElementById('modal-chat-messages');
+
+  chatUsername.innerText = `Chat with ${user.username}`;
+  chatMessages.innerHTML = ''; // Clear previous messages
+  chatModal.style.display = 'block';
+  console.log('selectUSER  function called');
+}
+
+function openChat(user) {
+    selectedUser = user; // Set the selected user for the chat
+    console.log('Selected user for chat:', selectedUser);
+
+    // Update the chat modal title
+    const chatUsername = document.getElementById('chat-username');
+    if (chatUsername) {
+        chatUsername.innerText = `Chat with ${user.username}`;
+    }
+
+    const chatMessages = document.getElementById('chat-messages-container');
+    if (chatMessages) {
+        chatMessages.innerHTML = ''; // Clear previous messages
+    }
+
+    const chatModal = document.getElementById('chat');
+    if (chatModal) {
+        chatModal.style.display = 'block';
+    }
+
+    // Fetch and display chat history
+    fetchChatHistory(user).then(() => {
+        console.log('Chat history fetched.');
+    }).catch(error => {
+        console.error('Error fetching chat history:', error);
+    });
+    console.log('Chat history fetched.');
+
+    // Show the chat modal
+    
+    const chatModalContainer = document.getElementById('chat-modal-container');
+    if (chatModal) {
+        chatModal.style.display = 'block';
+        chatModal.classList.remove('hidden');
+        console.log('Chat modal opened.');
+    } else {
+        console.error('Chat modal element is missing');
+    }
+    if (chatModalContainer) {
+        chatModalContainer.style.display = 'block';
+        chatModalContainer.classList.remove('hidden');
+        console.log('Chat modal container opened.');
+    } else {
+        console.error('Chat modal container element is missing');
+    }
+}
+
+
+
+async function fetchChatHistory(user) {
+    try {
+        const response = await fetch(`http://localhost:5000/messages/${user._id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch chat history');
+        }
+
+        const messages = await response.json();
+        const chatMessages = document.getElementById('chat-messages-container'); // Corrected ID
+        chatMessages.innerHTML = ''; // Clear previous messages
+
+        messages.forEach((message) => {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-bubble');
+
+            // Determine if the message is sent or received
+            if (message.sender === getUserIdFromToken(token)) {
+                messageElement.classList.add('sent'); // Add 'sent' class for user's own messages
+            } else {
+                messageElement.classList.add('received'); // Add 'received' class for other messages
+            }
+
+            messageElement.innerText = message.content;
+            chatMessages.appendChild(messageElement);
+        });
+
+        // Auto-scroll to the bottom of chat history
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (error) {
+        console.error('Error fetching chat history:', error);
+    }
+}
+
+
+function minimiseChat() {
+    const chatMessages = document.getElementById("chat-messages-container");
+    const chatInput = document.getElementById("chat-input");
+    chatMessages.style.display = chatMessages.style.display === "none" ? "block" : "none";
+    chatInput.style.display = chatInput.style.display === "none" ? "block" : "none";
+}
+
+
+function closeChatModal() {
+    
+    const chatModalContainer = document.getElementById('chat-modal-container');
+    const chatMessages = document.getElementById('modal-chat-messages');
+    const chatInput = document.getElementById('modal-chat-input');
+
+    // Hide the chat modal
+    if(chatModalContainer){
+      chatModalContainer.style.display = 'none';}else{
+        console.error('Chat modal container not found');
+      }
+    if(chatMessages){
+      chatMessages.innerHTML = '';}else{
+        console.error('Chat messages not found');
+      }
+    if(chatInput){
+        chatInput.value = '';}else{
+            console.error('Chat input not found');
+        }
+
+    // Deselect the user
+    selectedUser = null; 
+    console.log('closeChatModal function called, chat modal closed');
+}
+
+function toggleChat() {
+    const chat = document.getElementById("chat");
+    if (chat.classList.contains("hidden")) {
+        chat.classList.remove("hidden");
+    } else {
+        chat.classList.add("hidden");
+    }
+}
+
+async function sendChatMessage() {
+    const chatInput = document.getElementById('chat-input');
+    const messageContent = chatInput.value.trim();
+
+    if (!selectedUser || !messageContent) {
+        alert('Select a user and type a message.');
+        return;
+    }
+
+    try {
+        console.log('Sending message to:', selectedUser._id);  // Log receiver ID
+        console.log('Message content:', messageContent);       // Log message content
+
+        const response = await fetch('http://localhost:5000/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`, // Include JWT token
+            },
+            body: JSON.stringify({
+                receiver: selectedUser._id, // Receiver's ID
+                content: messageContent,   // Message content
+            }),
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            console.error('Error response:', responseData);
+            throw new Error(responseData.message || 'Failed to send message');
+        }
+
+        console.log('Message saved:', responseData.data);
+
+        // Add the message to the sender's chat window
+        const chatMessages = document.getElementById('chat-messages-container');
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chat-bubble', 'sent');
+        messageElement.innerText = messageContent;
+        chatMessages.appendChild(messageElement);
+        // Clear the input field
+        chatInput.value = '';
+        // Notify the chat button
+        // notifyChatButton();
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+    }
+}
+async function fetchProfiles() {
+    try {
+        const response = await fetch('http://localhost:5000/profiles/profiles', {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch profiles');
+
+        const profiles = await response.json();
+        console.log('Fetched profiles:', profiles); // Debug API response
+        renderProfiles(profiles);
+    } catch (error) {
+        console.error('Error fetching profiles:', error);
+        alert('Failed to load profiles. Please try again.');
+    }
+}
+
+
+function renderProfiles(profiles) {
+    const profilesList = document.getElementById('profiles-list');
+    if (!profilesList) {
+        console.error('Element with ID "profiles-list" not found in the DOM.');
+        return;
+    }
+
+    profilesList.innerHTML = ''; 
+
+    profiles.forEach((profile) => {
+        const imageUrl = profile.imageUrl
+            ? `http://localhost:5000/${profile.imageUrl}` // Use correct path
+            : 'default-placeholder.png'; // Default image if no profile picture
+
+        const profileElement = document.createElement('div');
+        profileElement.className = 'profile';
+        profileElement.innerHTML = `
+            <h3>${profile.profileName}</h3>
+            <p>${profile.description}</p>
+            <img src="http://localhost:5000/${profile.imageUrl}" alt="Profile Picture" />
+            <div class="profile-details" style="display: none;"></div>
+            <button  class="profile-expand-button" onclick="expandProfile(this)" style="--clr: #7808d0">
+            <span class="button__icon-wrapper">
+                <svg
+                viewBox="0 0 14 15"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                class="button__icon-svg"
+                width="10"
+                >
+                <path
+                    d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z"
+                    fill="currentColor"
+                ></path>
+                </svg>
+
+                <svg
+                viewBox="0 0 14 15"
+                fill="none"
+                width="10"
+                xmlns="http://www.w3.org/2000/svg"
+                class="button__icon-svg button__icon-svg--copy"
+                >
+                <path
+                    d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z"
+                    fill="currentColor"
+                ></path>
+                </svg>
+            </span>
+            Expand Profile
+            </button>
+
+            <!-- Hidden Modal for Expanded Profile -->
+            <div class="profile-modal hidden">
+                <div class="modal-content">
+                    <button class="close-modal" onclick="closeProfileModal(this)">✖ Close</button>
+                    <h2>Expanded Profile Name</h2>
+                    <p>Here are more detailed descriptions of the profile...</p>
+                    
+                </div>
+            </div>
+
+        `;
+        profilesList.appendChild(profileElement);
+    });
+}
+
+
+function expandProfile(button) {
+    // Find the parent profile div
+    const profile = button.closest('.profile');
+
+    // Find the profile-details div inside this profile
+    const details = profile.querySelector('.profile-details');
+
+    if (details.style.display === 'none' || details.style.display === '') {
+        // Expand the profile
+        details.style.display = 'block';
+        button.innerHTML = ' Collapse Profile'; // Change button text/icon
+        
+    } else {
+        // Collapse the profile
+        details.style.display = 'none';
+        button.innerHTML = ' Expand Profile'; // Change button text/icon
+    }
+}
+
+
+async function addProfile() {
+    const profileName = document.getElementById('profile-name').value; // Use profileName instead of name
+    const description = document.getElementById('profile-description').value;
+    const type = document.getElementById('profile-type').value;
+    const profilePictureInput = document.getElementById('profile-picture');
+    const profilePicture = profilePictureInput.files[0];
+
+    if (!profileName) {
+        alert('Profile name is required');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('profileName', profileName); // Use profileName
+    formData.append('description', description);
+    formData.append('type', type);
+    if (profilePicture) {
+        formData.append('profilePicture', profilePicture);
+    }
+
+    try {
+        const response = await fetch('http://localhost:5000/profiles/profiles', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData, // Send as multipart form-data
+        });
+
+        if (!response.ok) throw new Error('Failed to create profile');
+
+        alert('Profile added successfully');
+        fetchProfiles(); // Reload profiles
+    } catch (error) {
+        console.error('Error adding profile:', error);
+        alert('Failed to add profile. Please try again.');
+    }
+}
+// Function to open the Add Profile modal
+function openAddProfileModal() {
+  const modal = document.getElementById('add-profile-modal');
+  modal.style.display = 'flex'; // Display the modal as a flexbox
+}
+
+// Function to close the Add Profile modal
+function closeAddProfileModal() {
+  const modal = document.getElementById('add-profile-modal');
+  modal.style.display = 'none'; // Hide the modal
+}
+
+
+
+
+
+
+  </script>
+</body>
+</html>
