@@ -10,6 +10,7 @@ const BeatSchema = new mongoose.Schema(
     duration: { type: String, default: '' },
     plays: { type: String, default: '0' },
     audioUrl: { type: String, default: '' },
+    comment: { type: String, default: '' },
   },
   { _id: false }
 );
@@ -21,6 +22,8 @@ const VideoSchema = new mongoose.Schema(
     type: { type: String, default: '' },
     year: { type: String, default: '' },
     img: { type: String, default: '' },
+    videoUrl: { type: String, default: '' },
+    comment: { type: String, default: '' },
   },
   { _id: false }
 );

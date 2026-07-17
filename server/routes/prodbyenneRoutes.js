@@ -2,29 +2,19 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
+const jwt = require('jsonwebtoken');
 
 const authenticateToken = require('../middleware/auth');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const ProdbyenneContent = require('../models/ProdbyenneContent');
 
+module.exports = (io) => {
 const router = express.Router();
 
 const DEFAULT_CONTENT = {
-  beats: [
-    { id: 1, title: 'Midnight Session', genre: 'Trap / Dark', bpm: 140, key: 'F# min', duration: '2:34', plays: '12.4K', audioUrl: '' },
-    { id: 2, title: 'Golden Hour', genre: 'R&B / Soul', bpm: 92, key: 'Bb maj', duration: '3:12', plays: '8.9K', audioUrl: '' },
-    { id: 3, title: 'Concrete Jungle', genre: 'Boom Bap', bpm: 87, key: 'A min', duration: '2:58', plays: '21.1K', audioUrl: '' },
-    { id: 4, title: 'Neon Haze', genre: 'Lo-Fi / Chill', bpm: 75, key: 'D maj', duration: '3:44', plays: '6.3K', audioUrl: '' },
-    { id: 5, title: 'Phantom Frequency', genre: 'Drill', bpm: 142, key: 'C min', duration: '2:21', plays: '18.7K', audioUrl: '' },
-    { id: 6, title: 'Studio Chronicles', genre: 'Hip-Hop / West', bpm: 98, key: 'G min', duration: '3:05', plays: '9.2K', audioUrl: '' },
-  ],
-  videos: [
-    { id: 1, title: 'Full Studio Session — Marcus Layne', type: 'Session Recording', year: '2024', img: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&h=450&fit=crop&auto=format' },
-    { id: 2, title: 'Beat Making: Midnight Session', type: 'Beat Breakdown', year: '2024', img: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800&h=450&fit=crop&auto=format' },
-    { id: 3, title: 'Live Mix — Warehouse Set', type: 'Live Recording', year: '2023', img: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=450&fit=crop&auto=format' },
-    { id: 4, title: 'Artist EP: Delara — Full Project', type: 'EP Production', year: '2023', img: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&h=450&fit=crop&auto=format' },
-  ],
+  beats: [],
+  videos: [],
   hero: {
     backgroundImg: 'https://images.unsplash.com/photo-1598653222000-6b7b7a552625?w=1600&h=900&fit=crop&auto=format',
     tagline: 'Producer · Sound Recorder · Engineer',
@@ -42,6 +32,24 @@ function sanitizeString(value, fallback = '') {
   return typeof value === 'string' ? value : fallback;
 }
 
+function resolveLegacyVideoUrl(input = {}) {
+  const candidates = [
+    input.videoUrl,
+    input.url,
+    input.src,
+    input.fileUrl,
+    input.video,
+    input.mediaUrl,
+  ];
+
+  const match = candidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+  return sanitizeString(match || '');
+}
+
+function escapeRegex(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function normalizeBeat(input, fallbackId) {
   return {
     id: Number(input.id) || fallbackId,
@@ -52,6 +60,7 @@ function normalizeBeat(input, fallbackId) {
     duration: sanitizeString(input.duration),
     plays: sanitizeString(input.plays, '0'),
     audioUrl: sanitizeString(input.audioUrl),
+    comment: sanitizeString(input.comment),
   };
 }
 
@@ -62,6 +71,8 @@ function normalizeVideo(input, fallbackId) {
     type: sanitizeString(input.type),
     year: sanitizeString(input.year),
     img: sanitizeString(input.img),
+    videoUrl: resolveLegacyVideoUrl(input),
+    comment: sanitizeString(input.comment),
   };
 }
 
@@ -102,6 +113,105 @@ function requireAdmin(req, res, next) {
   return next();
 }
 
+async function resolveBookingRequesterFromAuthHeader(req) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = jwt.verify(token, 'secret_key');
+    if (!payload?.id) {
+      return null;
+    }
+
+    const user = await User.findById(payload.id, '_id username');
+    if (!user) {
+      return null;
+    }
+
+    return {
+      requesterUser: user._id,
+      requesterUsername: user.username,
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+function mapBooking(booking) {
+  return {
+    id: String(booking._id),
+    name: booking.name,
+    email: booking.email,
+    requesterUser: booking.requesterUser ? String(booking.requesterUser) : null,
+    requesterUsername: booking.requesterUsername || null,
+    status: booking.status || 'pending',
+    sessionDateTime: booking.sessionDateTime,
+    service: booking.service,
+    message: booking.message,
+    read: booking.read,
+    createdAt: booking.createdAt,
+  };
+}
+
+function emitBookingCreated(booking) {
+  if (!io) return;
+  const payload = mapBooking(booking);
+  io.to('admins').emit('booking_created', payload);
+
+  if (payload.requesterUser) {
+    io.to(payload.requesterUser).emit('booking_created', payload);
+  }
+}
+
+function emitBookingUpdated(booking) {
+  if (!io) return;
+  const payload = mapBooking(booking);
+  io.to('admins').emit('booking_updated', payload);
+
+  if (payload.requesterUser) {
+    io.to(payload.requesterUser).emit('booking_updated', payload);
+  }
+}
+
+function emitBookingDeleted(booking) {
+  if (!io) return;
+  const payload = mapBooking(booking);
+  io.to('admins').emit('booking_deleted', payload);
+
+  if (payload.requesterUser) {
+    io.to(payload.requesterUser).emit('booking_deleted', payload);
+  }
+}
+
+function emitBookingsCleared() {
+  if (!io) return;
+  io.to('admins').emit('bookings_cleared');
+}
+
+function isAllowedUploadForFolder(folder, file) {
+  const safeFolder = String(folder || '').toLowerCase();
+  const ext = String(path.extname(file?.originalname || '') || '').toLowerCase();
+  const mime = String(file?.mimetype || '').toLowerCase();
+  const isGenericMime = !mime || mime === 'application/octet-stream';
+
+  if (safeFolder === 'audio') {
+    const allowedExt = new Set(['.mp3', '.wav']);
+    const allowedMime = new Set(['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/wave']);
+    return allowedExt.has(ext) && (allowedMime.has(mime) || isGenericMime);
+  }
+
+  if (safeFolder === 'videos') {
+    const allowedExt = new Set(['.mp4', '.mkv', '.mov', '.webm']);
+    const allowedMime = new Set(['video/mp4', 'video/x-matroska', 'video/quicktime', 'video/webm']);
+    return allowedExt.has(ext) && (allowedMime.has(mime) || isGenericMime);
+  }
+
+  return true;
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '..', 'uploads'));
@@ -118,11 +228,24 @@ const upload = multer({ storage });
 router.get('/content', async (req, res) => {
   try {
     const content = await getOrCreateContent();
+    const normalized = normalizeContent(content.toObject());
+
+    // Persist a one-time migration for legacy video URL keys.
+    const hadLegacyVideoUrls = normalized.videos.some((video, index) => {
+      const current = content.videos[index];
+      return current && String(current.videoUrl || '').trim() !== String(video.videoUrl || '').trim();
+    });
+
+    if (hadLegacyVideoUrls) {
+      content.videos = normalized.videos;
+      await content.save();
+    }
+
     return res.json({
-      beats: content.beats,
-      videos: content.videos,
-      hero: content.hero,
-      about: content.about,
+      beats: normalized.beats,
+      videos: normalized.videos,
+      hero: normalized.hero,
+      about: normalized.about,
     });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to load content', error: error.message });
@@ -265,21 +388,40 @@ router.delete('/videos/:id', authenticateToken, requireAdmin, async (req, res) =
 
 router.post('/bookings', async (req, res) => {
   try {
-    const { name, email, service, message } = req.body || {};
-    if (!name || !email || !service || !message) {
+    const { name, email, service, message, sessionDateTime } = req.body || {};
+    if (!name || !email || !service || !message || !sessionDateTime) {
       return res.status(400).json({ message: 'Missing required booking fields' });
     }
 
-    const booking = await Booking.create({ name, email, service, message });
-    return res.status(201).json({
-      id: String(booking._id),
-      name: booking.name,
-      email: booking.email,
-      service: booking.service,
-      message: booking.message,
-      read: booking.read,
-      createdAt: booking.createdAt,
+    const parsedSessionDateTime = new Date(sessionDateTime);
+    if (Number.isNaN(parsedSessionDateTime.getTime())) {
+      return res.status(400).json({ message: 'Invalid booking date/time' });
+    }
+
+    const conflictingAcceptedBooking = await Booking.findOne({
+      status: 'accepted',
+      sessionDateTime: parsedSessionDateTime,
     });
+
+    if (conflictingAcceptedBooking) {
+      return res.status(409).json({
+        message: 'This session date/time has already been accepted. Please choose another slot.',
+      });
+    }
+
+    const requester = await resolveBookingRequesterFromAuthHeader(req);
+
+    const booking = await Booking.create({
+      name,
+      email,
+      service,
+      message,
+      sessionDateTime: parsedSessionDateTime,
+      requesterUser: requester?.requesterUser,
+      requesterUsername: requester?.requesterUsername,
+    });
+    emitBookingCreated(booking);
+    return res.status(201).json(mapBooking(booking));
   } catch (error) {
     return res.status(500).json({ message: 'Failed to create booking', error: error.message });
   }
@@ -288,17 +430,42 @@ router.post('/bookings', async (req, res) => {
 router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const bookings = await Booking.find({}).sort({ createdAt: -1 });
-    return res.json(
-      bookings.map((booking) => ({
-        id: String(booking._id),
-        name: booking.name,
-        email: booking.email,
-        service: booking.service,
-        message: booking.message,
-        read: booking.read,
-        createdAt: booking.createdAt,
-      }))
-    );
+    return res.json(bookings.map(mapBooking));
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
+  }
+});
+
+router.get('/bookings/my', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id, '_id username email');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const normalizedEmail = String(user.email || '').trim().toLowerCase();
+    if (normalizedEmail) {
+      const emailRegex = new RegExp(`^${escapeRegex(normalizedEmail)}$`, 'i');
+
+      await Booking.updateMany(
+        {
+          email: emailRegex,
+          $or: [
+            { requesterUser: null },
+            { requesterUser: { $exists: false } },
+          ],
+        },
+        {
+          $set: {
+            requesterUser: user._id,
+            requesterUsername: user.username,
+          },
+        }
+      );
+    }
+
+    const bookings = await Booking.find({ requesterUser: user._id }).sort({ createdAt: -1 });
+    return res.json(bookings.map(mapBooking));
   } catch (error) {
     return res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
   }
@@ -310,9 +477,49 @@ router.put('/bookings/:id/read', authenticateToken, requireAdmin, async (req, re
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
+    emitBookingUpdated(booking);
     return res.json({ message: 'Booking marked as read' });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to update booking', error: error.message });
+  }
+});
+
+router.put('/bookings/:id/status', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const requestedStatus = String(req.body?.status || '').toLowerCase();
+    if (!['accepted', 'rejected'].includes(requestedStatus)) {
+      return res.status(400).json({ message: 'Status must be accepted or rejected' });
+    }
+
+    const existingBooking = await Booking.findById(req.params.id);
+    if (!existingBooking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (requestedStatus === 'accepted') {
+      const conflictingAcceptedBooking = await Booking.findOne({
+        _id: { $ne: existingBooking._id },
+        status: 'accepted',
+        sessionDateTime: existingBooking.sessionDateTime,
+      });
+
+      if (conflictingAcceptedBooking) {
+        return res.status(409).json({
+          message: 'Another booking is already accepted for this session date/time.',
+        });
+      }
+    }
+
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { status: requestedStatus, read: true },
+      { new: true }
+    );
+
+    emitBookingUpdated(booking);
+    return res.json(mapBooking(booking));
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to update booking status', error: error.message });
   }
 });
 
@@ -322,6 +529,7 @@ router.delete('/bookings/:id', authenticateToken, requireAdmin, async (req, res)
     if (!deleted) {
       return res.status(404).json({ message: 'Booking not found' });
     }
+    emitBookingDeleted(deleted);
     return res.json({ message: 'Booking deleted' });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to delete booking', error: error.message });
@@ -331,6 +539,7 @@ router.delete('/bookings/:id', authenticateToken, requireAdmin, async (req, res)
 router.delete('/bookings', authenticateToken, requireAdmin, async (req, res) => {
   try {
     await Booking.deleteMany({});
+    emitBookingsCleared();
     return res.json({ message: 'All bookings deleted' });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to delete bookings', error: error.message });
@@ -340,6 +549,10 @@ router.delete('/bookings', authenticateToken, requireAdmin, async (req, res) => 
 router.post('/upload', authenticateToken, requireAdmin, upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  if (!isAllowedUploadForFolder(req.body?.folder, req.file)) {
+    return res.status(400).json({ error: 'Unsupported file type for selected media folder' });
   }
 
   return res.json({ url: `/uploads/${req.file.filename}` });
@@ -358,4 +571,5 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+return router;
+};

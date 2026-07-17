@@ -25,13 +25,13 @@ const userRoutes = require('./routes/userRoutes')(io);
 const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes')(io);
 const profileRoutes = require('./routes/profileRoutes');
-const prodbyenneRoutes = require('./routes/prodbyenneRoutes');
+const prodbyenneRoutes = require('./routes/prodbyenneRoutes')(io);
 
 const path = require('path');
 const clientPath = path.join(__dirname, '..', 'client');
 
 async function emitUsersSnapshot() {
-  const users = await User.find({}, 'username role isOnline');
+  const users = await User.find({}, 'username fullName profileImageUrl role isOnline');
   io.emit('users_updated', users);
 }
 
@@ -77,8 +77,11 @@ io.on('connection', (socket) => {
   socket.on('join_room', async (userId) => {
       if (userId) {
           // Store the socketId with the user in the database
-          await User.findByIdAndUpdate(userId, { socketId: socket.id, isOnline: true });
+          const user = await User.findByIdAndUpdate(userId, { socketId: socket.id, isOnline: true }, { new: true });
           socket.join(userId); // User joins their room
+          if (user && user.role === 'admin') {
+            socket.join('admins');
+          }
           console.log(`User ${userId} joined room ${userId}`);
         await emitUsersSnapshot();
       }
