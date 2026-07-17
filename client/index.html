@@ -1129,12 +1129,22 @@
         ensureSiteMediaPlayer();
 
         if (payload.type === 'prodbyenne:playlist') {
-            setSiteMediaPlaylist(payload.playlist);
+            const incomingPlaylist = Array.isArray(payload.playlist) ? payload.playlist : [];
+            const hasExistingTracks = siteMediaState.playlist.length > 0;
+
+            // Ignore empty sync payloads from embed boot when we already have an active playlist.
+            if (!incomingPlaylist.length && hasExistingTracks) {
+                return;
+            }
+
+            setSiteMediaPlaylist(incomingPlaylist);
             return;
         }
 
         if (payload.type === 'prodbyenne:playBeat') {
-            const incomingPlaylist = Array.isArray(payload.playlist) ? payload.playlist : siteMediaState.playlist;
+            const incomingPlaylist = Array.isArray(payload.playlist) && payload.playlist.length
+                ? payload.playlist
+                : siteMediaState.playlist;
             setSiteMediaPlaylist(incomingPlaylist);
 
             const index = findTrackIndexInPlaylist(siteMediaState.playlist, payload.beatId, payload.beat);
@@ -1143,6 +1153,17 @@
             const sameTrack = siteMediaState.currentIndex === index;
             if (sameTrack && payload.toggleIfSame) {
                 toggleSiteMediaPlayback();
+                return;
+            }
+
+            if (sameTrack) {
+                const audio = getSiteMediaAudioElement();
+                if (audio && audio.paused) {
+                    audio.play().catch((error) => {
+                        console.warn('Unable to resume audio playback:', error);
+                    });
+                }
+                updateSiteMediaPlayerUI();
                 return;
             }
 
