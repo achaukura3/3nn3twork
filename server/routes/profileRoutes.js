@@ -8,7 +8,7 @@ const upload = multer({ dest: 'uploads/' });
 
 router.post('/profiles', authenticateToken, upload.single('profilePicture'), async (req, res) => {
   try {
-      const { profileName, description, type } = req.body; // Access profileName from req.body
+    const { profileName, description, type, profilePageUrl } = req.body; // Access profileName from req.body
       const imageUrl = req.file ? req.file.path : null; // Use file path if a profile picture is uploaded
 
       if (!profileName) {
@@ -20,6 +20,7 @@ router.post('/profiles', authenticateToken, upload.single('profilePicture'), asy
           profileName,
           description,
           type,
+          profilePageUrl,
           imageUrl,
       });
 
@@ -48,12 +49,12 @@ router.get('/profiles', authenticateToken, async (req, res) => {
 
 router.put('/profiles/:id', authenticateToken, async (req, res) => {
   try {
-      const { name, description, profilePicture, type } = req.body;
+    const { name, description, profilePicture, type, profilePageUrl } = req.body;
 
       // Find the profile and ensure it belongs to the logged-in user
       const profile = await Profile.findOneAndUpdate(
           { _id: req.params.id, userId: req.user.id },
-          { name, description, profilePicture, type },
+          { name, description, profilePicture, type, profilePageUrl },
           { new: true }
       );
 

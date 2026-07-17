@@ -5,6 +5,7 @@ const profileSchema = new mongoose.Schema({
     profileName: { type: String, required: true }, // Ensure this is marked as required
     description: { type: String },
     type: { type: String, enum: ['business', 'personal'], default: 'personal' },
+    profilePageUrl: { type: String },
     imageUrl: { type: String },
     createdAt: { type: Date, default: Date.now },
 });

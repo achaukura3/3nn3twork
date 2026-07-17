@@ -86,28 +86,50 @@
               <label for="textarea">Password</label>
               <input type="password" id="signup-password" placeholder="Enter your password" required="" />
             </div>
-            <div class="form-group">
-              <label for="textarea">Role</label>
-              <select id="signup-role">
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
+                    <div class="form-group">
+                        <label for="signup-full-name">Name</label>
+                        <input type="text" id="signup-full-name" placeholder="Enter your full name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-dob">Date of Birth</label>
+                        <input type="date" id="signup-dob" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-interest">Interest</label>
+                        <select id="signup-interest" required>
+                            <option value="" selected disabled>Select interest</option>
+                            <option value="software">Software</option>
+                            <option value="music">Music</option>
+                            <option value="art">Art</option>
+                            <option value="video-editing">Videos Editing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" placeholder="Enter your email" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-contact-number">Contact Number</label>
+                        <input type="tel" id="signup-contact-number" placeholder="Enter your contact number" required />
+                    </div>
             <button class="form-submit-btn"  onclick="signup()">SignUp</button>
             <button class="form-submit-btn"  onclick="toggleSignupForm()">Login</button>
         
             </div>    
         
 
-        <!-- Dashboard -->
-        <div id="dashboard" style="display: none;">
-
-          <div class="profile-view-shell">
+                <!-- Dashboard -->
+                <div id="dashboard" style="display: none;">
+                    <div class="profile-view-shell">
             <div class="profile-filter-bar">
               <input id="profile-filter" class="profile-filter-input" type="text" placeholder="Filter profiles by name, type, or description" oninput="filterProfiles()" />
             </div>
-            <div class="profile-ring">
-              <div id="profiles-list" class="profiles-grid">
+    
+            <!-- Top scrollbar syncer -->
+            <div id="scrollbar-sync" class="scrollbar-sync"></div>
+    
+            <div id="profiles-list" class="profile-ring">
+              <div class="profiles-grid">
                 <!-- Profiles will be dynamically populated here -->
               </div>
             </div>
@@ -131,7 +153,9 @@
         <option value="personal">Personal</option>
         <option value="business">Business</option>
       </select>
+            <input type="text" id="profile-page-url" placeholder="Embedded Page URL (e.g. /profiles/prodbyenne/index.html)" />
       <input type="file" id="profile-picture" />
+        </div>
     </div>
     <div class="modal-footer">
       <button onclick="addProfile()">Add Profile</button>
@@ -183,20 +207,16 @@
         <button id="chat-toggle-button" class="buttons" onclick="toggleChat()">💬</button>
           <!-- Users Modal -->
           <div id="chat-modal" style="display: none;">
-            <div class="modal-header user-modal-header">
-                
-                <button id="minimise-users" class="window-control-button window-control-icon" onclick="minimiseUsers()" aria-label="Minimize users"> 
-                    <span class="window-icon window-icon-minimize"></span>
-                </button>
+            <div class="window-controls">
+            
                 <button id="close-users" class="window-control-button window-control-icon" onclick="closeUsers()" aria-label="Close users">
                     <span class="window-icon window-icon-close"></span>
                 </button>
             </div>
             <h3>Chat with</h3>
             <div id="users-list"></div>
-        </div> 
-          
-      </div>
+        </div>
+
       <div id="chat" class="hidden" style="display: none;">
         <div id="chat-modal-container">
             <div class="modal-header retro-window-header">
@@ -206,12 +226,11 @@
                     <span id="chat-collapse-summary" class="chat-collapse-summary hidden">Chat with <span id="chat-collapse-username">No user selected</span> — click to expand</span>
                 </div>
                 <div class="window-controls">
-                    <button id="minimise-chat" class="window-control-button window-control-icon" onclick="minimiseChat()" aria-label="Minimize chat">
+                    <button id="collapse-chat" class="window-control-button window-control-icon" onclick="minimiseChat()" aria-label="Collapse chat">
                         <span class="window-icon window-icon-minimize"></span>
                     </button>
-                    <button id="close-modal" class="window-control-button window-control-icon" onclick="closeChatModal()" aria-label="Close chat">
-                        <span class="window-icon window-icon-close"></span>
-                    </button>
+
+          
                 </div>
             </div>
             <div id="chat-messages-container" class="chat-messages-box chat-collapse-transition">
@@ -230,7 +249,70 @@
   let token = null;
   let selectedUser = null; // Ensure this is defined first
   let currentProfiles = [];
+    let currentUsers = [];
   const socket = io('http://localhost:5000'); // Ensure Socket.IO is initialized correctly
+
+    function setAuthView(isLoggedIn) {
+        document.body.classList.toggle('auth-view', !isLoggedIn);
+
+        const loginSection = document.getElementById('login-section');
+        const signupSection = document.getElementById('signup-section');
+        const dashboard = document.getElementById('dashboard');
+        const authOnlyButtons = [
+            document.getElementById('add-profile-button'),
+            document.getElementById('logout-button'),
+            document.getElementById('chats-button'),
+            document.getElementById('chat-toggle-button'),
+        ];
+        const actionRail = document.getElementById('action-rail');
+        const chatModal = document.getElementById('chat-modal');
+        const chatPanel = document.getElementById('chat');
+        const addProfileModal = document.getElementById('add-profile-modal');
+
+        if (loginSection) {
+            loginSection.style.display = isLoggedIn ? 'none' : 'block';
+            if (!isLoggedIn) {
+                loginSection.classList.remove('hidden');
+            }
+        }
+
+        if (signupSection) {
+            signupSection.classList.add('hidden');
+            signupSection.classList.remove('fade-in', 'fade-out');
+            signupSection.style.display = 'none';
+        }
+
+        if (dashboard) {
+            dashboard.style.display = isLoggedIn ? 'block' : 'none';
+        }
+
+        authOnlyButtons.forEach((button) => {
+            if (!button) return;
+            button.style.display = isLoggedIn ? 'flex' : 'none';
+        });
+
+        if (actionRail) {
+            actionRail.style.display = isLoggedIn ? 'flex' : 'none';
+            if (!isLoggedIn) {
+                actionRail.classList.remove('is-expanded');
+            }
+        }
+
+        if (!isLoggedIn) {
+            if (chatModal) chatModal.style.display = 'none';
+            if (chatPanel) {
+                chatPanel.style.display = 'none';
+                chatPanel.classList.add('hidden');
+                chatPanel.classList.remove('collapsed');
+            }
+            if (addProfileModal) addProfileModal.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setupSocketListeners();
+        setAuthView(false);
+    });
 
   // Listen for incoming messages
   
@@ -254,8 +336,7 @@ async function login() {
 
         // Save token and switch UI to dashboard
         token = data.token;
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
+        setAuthView(true);
        
 
         const userId = getUserIdFromToken(token);
@@ -268,6 +349,7 @@ async function login() {
         // await fetchPosts();
         //fetch profiles after successful login 
         await fetchProfiles();
+        await fetchUsers();
 
         // Reinitialize WebSocket listeners
         setupSocketListeners();
@@ -280,45 +362,43 @@ async function login() {
 
 function setupSocketListeners() {
     socket.off('receive_message'); // Remove existing listeners first
+    socket.off('user_logged_in');
+    socket.off('user_logged_out');
+    socket.off('users_updated');
+
+    socket.on('user_logged_in', ({ userId }) => {
+        console.log(`User ${userId} logged in`);
+        updateUserStatusIndicator(userId, true);
+    });
 
     socket.on('receive_message', (message) => {
     console.log('Message received:', message);
 
-    const chatModal = document.getElementById('chat');
-    if (!chatModal || chatModal.style.display === 'none') {
-        console.error('Chat modal is not visible or missing!');
+    const incomingSenderId = normalizeObjectId(message?.senderId);
+    const activeSelectedUserId = normalizeObjectId(selectedUser?._id);
+
+    if (!incomingSenderId || !activeSelectedUserId || incomingSenderId !== activeSelectedUserId) {
         return;
     }
 
     const chatMessages = document.getElementById('chat-messages-container');
     if (!chatMessages) {
-        console.error('Chat messages container not found!');
         return;
     }
 
-    if (selectedUser && selectedUser._id === message.senderId) {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('chat-bubble', 'received');
-        messageElement.innerText = message.content;
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('chat-bubble', 'received');
+    messageElement.innerText = message.content;
 
-        chatMessages.appendChild(messageElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    } else {
-        console.warn('Message not for the selected user or no user selected.');
-    }
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
 
     socket.on('user_logged_out', ({ userId }) => {
         console.log(`User ${userId} logged out`);
 
-        const userElements = document.getElementById('users').children;
-        for (const userElement of userElements) {
-            if (userElement.dataset.userId === userId) {
-                userElement.style.color = 'gray';
-                userElement.innerText = `${userElement.innerText.split('(')[0]} (Offline)`;
-            }
-        }
+        updateUserStatusIndicator(userId, false);
 
         if (selectedUser && selectedUser._id === userId) {
             const chatModal = document.getElementById('chat-modal');
@@ -328,6 +408,11 @@ function setupSocketListeners() {
             selectedUser = null;
             closeChat();
         }
+    });
+
+    socket.on('users_updated', (users) => {
+        currentUsers = Array.isArray(users) ? users : [];
+        renderUsersModal(currentUsers);
     });
 }
 
@@ -350,8 +435,7 @@ function setupSocketListeners() {
 
         // Reset UI
         token = null;
-        document.getElementById('dashboard').style.display = 'none';
-        document.getElementById('login-section').style.display = 'block';
+        setAuthView(false);
         // document.getElementById('open-users-modal').style.display = 'none';
 
  
@@ -373,25 +457,37 @@ function setupSocketListeners() {
     async function signup() {
         const username = document.getElementById('signup-username').value;
         const password = document.getElementById('signup-password').value;
-        const role = document.getElementById('signup-role').value;
+        const role = 'user';
+        const fullName = document.getElementById('signup-full-name').value.trim();
+        const dateOfBirth = document.getElementById('signup-dob').value;
+        const interest = document.getElementById('signup-interest').value;
+        const email = document.getElementById('signup-email').value.trim();
+        const contactNumber = document.getElementById('signup-contact-number').value.trim();
 
-        try {
-            const response = await fetch('http://localhost:5000/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, role }),
-            });
+        if (!fullName || !dateOfBirth || !interest || !email || !contactNumber) {
+            alert('Please fill in name, date of birth, interest, email, and contact number.');
+            return;
+        }
 
-            const data = await response.json();
-            if (response.ok) {
-                alert(data.message);
-                toggleSignupForm();
-            } else {
-                alert(data.message || 'Error signing up');
-            }
-        } catch (error) {
-            console.error('Signup error:', error);
-            alert('Unable to sign up right now.');
+        const payload = { username, password, role };
+        payload.fullName = fullName;
+        payload.dateOfBirth = dateOfBirth;
+        payload.interest = interest;
+        payload.email = email;
+        payload.contactNumber = contactNumber;
+
+        const response = await fetch('http://localhost:5000/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message);
+            toggleSignupForm(); // Hide the signup form after successful signup
+        } else {
+            alert(data.message || 'Error signing up');
         }
         }
 
@@ -399,25 +495,30 @@ function setupSocketListeners() {
         const loginSection = document.getElementById('login-section');
         const signupSection = document.getElementById('signup-section');
 
+        if (!loginSection || !signupSection) return;
+
         if (signupSection.classList.contains('hidden')) {
-            // Remove the hidden class to prepare for fade-in
+            signupSection.style.display = 'block';
+            loginSection.style.display = 'none';
             signupSection.classList.remove('hidden');
             signupSection.classList.remove('fade-out');
             signupSection.classList.add('fade-in');
             loginSection.classList.add('hidden');
             loginSection.classList.add('fade-out');
+            loginSection.classList.remove('fade-in');
         } else {
-            // Start the fade-out animation
             signupSection.classList.remove('fade-in');
             signupSection.classList.add('fade-out');
 
             loginSection.classList.remove('fade-out');
-            loginSection.classList.add('fade-in');
-
-            // Wait for the animation to finish, then hide the element
-            setTimeout(() => {
-            signupSection.classList.add('hidden');
             loginSection.classList.remove('hidden');
+            loginSection.classList.add('fade-in');
+            loginSection.style.display = 'block';
+
+            setTimeout(() => {
+                signupSection.classList.add('hidden');
+                signupSection.style.display = 'none';
+                loginSection.classList.remove('hidden');
             }, 500); 
         }
     }
@@ -433,9 +534,10 @@ function setupSocketListeners() {
 
                 const users = await response.json();
                 console.log('Fetched users:', users);
+                currentUsers = Array.isArray(users) ? users : [];
 
             
-                renderUsersModal(users); // Render for chat modal
+                renderUsersModal(currentUsers); // Render for chat modal
 
             } catch (error) {
                 console.error('Error fetching users:', error);
@@ -450,9 +552,7 @@ function renderUsersModal(users) {
     usersList.innerHTML = ''; // Clear the modal user list
 
     users.forEach(user => {
-        const userItem = document.createElement('div');
-        userItem.className = 'user-item';
-        userItem.innerText = user.username;
+        const userItem = createUserElement(user);
 
         // Add event listener to open a chat with the user
         userItem.addEventListener('click', () => openChat(user));
@@ -460,6 +560,34 @@ function renderUsersModal(users) {
         // Append the user to the users list in the modal
         usersList.appendChild(userItem);
     });
+}
+
+function updateUserStatusIndicator(userId, isOnline) {
+    currentUsers = currentUsers.map((user) => (
+        user._id === userId ? { ...user, isOnline } : user
+    ));
+
+    const userItem = document.querySelector(`#users-list .user-item[data-user-id="${userId}"]`);
+    if (!userItem) {
+        renderUsersModal(currentUsers);
+        return;
+    }
+
+    userItem.classList.toggle('online', isOnline);
+    userItem.classList.toggle('offline', !isOnline);
+
+    const statusLabel = userItem.querySelector('.user-status-label');
+    if (statusLabel) {
+        statusLabel.textContent = isOnline ? 'Online' : 'Offline';
+    }
+
+    const statusDot = userItem.querySelector('.user-status-dot');
+    if (statusDot) {
+        statusDot.classList.toggle('online', isOnline);
+        statusDot.classList.toggle('offline', !isOnline);
+    }
+
+    renderUsersModal(currentUsers);
 }
 
 
@@ -529,12 +657,23 @@ async function fetchPosts() {
 // Function to toggle chat modal
 function toggleChatModal() {
     const chatModal = document.getElementById('chat-modal');
-    if (chatModal.style.display === 'block') {
-        chatModal.style.display = 'none'; // Hide the modal
-    } else {
-        chatModal.style.display = 'block'; // Show the modal
-        fetchUsers(); 
+    if (!chatModal) return;
+
+    if (chatModal.classList.contains('is-open')) {
+        closeUsers();
+        return;
     }
+
+    if (chatModal._closeTimer) {
+        clearTimeout(chatModal._closeTimer);
+        chatModal._closeTimer = null;
+    }
+
+    chatModal.style.display = 'block';
+    requestAnimationFrame(() => {
+        chatModal.classList.add('is-open');
+    });
+    fetchUsers(); 
 }
 
 
@@ -570,21 +709,54 @@ function renderPosts(posts) {
 
 
 function openUsersModal() {
-    const usersModal = document.getElementById('users-modal');
+    const usersModal = document.getElementById('chat-modal');
+    if (!usersModal) return;
+
+    if (usersModal._closeTimer) {
+        clearTimeout(usersModal._closeTimer);
+        usersModal._closeTimer = null;
+    }
+
     usersModal.style.display = 'block';
+    requestAnimationFrame(() => {
+        usersModal.classList.add('is-open');
+    });
+    fetchUsers();
 }
 
 function closeUsers() {
     const usersModal = document.getElementById('chat-modal');
-    usersModal.style.display = 'none';
+    if (!usersModal) return;
+
+    usersModal.classList.remove('is-open');
+
+    if (usersModal._closeTimer) {
+        clearTimeout(usersModal._closeTimer);
+    }
+
+    usersModal._closeTimer = setTimeout(() => {
+        usersModal.style.display = 'none';
+        usersModal._closeTimer = null;
+    }, 280);
 }
 function minimiseUsers() {
     const usersModal = document.getElementById('chat-modal');
+    if (!usersModal) return;
+
     const minimiseButton = document.getElementById('minimise-users');
     const isCollapsed = usersModal.classList.toggle('collapsed');
 
     if (minimiseButton) {
         const icon = minimiseButton.querySelector('.window-icon');
+        if (icon) {
+            icon.classList.toggle('window-icon-minimize', !isCollapsed);
+            icon.classList.toggle('window-icon-expand', isCollapsed);
+        }
+    }
+
+    const collapseButton = document.getElementById('collapse-chat');
+    if (collapseButton) {
+        const icon = collapseButton.querySelector('.window-icon');
         if (icon) {
             icon.classList.toggle('window-icon-minimize', !isCollapsed);
             icon.classList.toggle('window-icon-expand', isCollapsed);
@@ -599,8 +771,27 @@ function createUserElement(user) {
   const userElement = document.createElement('div');
   userElement.className = 'user-item';
   userElement.dataset.userId = user._id; // Use data-* attribute for the user ID
-  userElement.innerText = `${user.username} (${user.role}) - ${user.isOnline ? 'Online' : 'Offline'}`;
-  userElement.classList.add(user.isOnline ? 'online' : 'offline'); // Add a class for styling
+    userElement.classList.add(user.isOnline ? 'online' : 'offline'); // Add a class for styling
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'user-item-name';
+    nameSpan.textContent = user.username;
+
+    const statusWrap = document.createElement('span');
+    statusWrap.className = 'user-status';
+
+    const statusDot = document.createElement('span');
+    statusDot.className = `user-status-dot ${user.isOnline ? 'online' : 'offline'}`;
+
+    const statusLabel = document.createElement('span');
+    statusLabel.className = 'user-status-label';
+    statusLabel.textContent = user.isOnline ? 'Online' : 'Offline';
+
+    statusWrap.appendChild(statusDot);
+    statusWrap.appendChild(statusLabel);
+
+    userElement.appendChild(nameSpan);
+    userElement.appendChild(statusWrap);
 
   userElement.addEventListener('click', () => selectUser(user)); // Add click event
 
@@ -621,15 +812,25 @@ function selectUser(user) {
   console.log('selectUSER  function called');
 }
 
+function updateChatHeaderName() {
+    const userName = selectedUser?.username || 'No user selected';
+    const chatUsername = document.getElementById('chat-username');
+    const collapseUsername = document.getElementById('chat-collapse-username');
+
+    if (chatUsername) {
+        chatUsername.innerText = userName;
+    }
+
+    if (collapseUsername) {
+        collapseUsername.innerText = userName;
+    }
+}
+
 function openChat(user) {
     selectedUser = user; // Set the selected user for the chat
     console.log('Selected user for chat:', selectedUser);
 
-    // Update the chat modal title
-    const chatUsername = document.getElementById('chat-username');
-    if (chatUsername) {
-        chatUsername.innerText = user.username;
-    }
+    updateChatHeaderName();
 
     const chat = document.getElementById('chat');
     if (chat) {
@@ -657,7 +858,7 @@ function openChat(user) {
     console.log('Chat history fetched.');
 
     // Show the chat modal
-    
+    const chatModal = document.getElementById('chat');
     const chatModalContainer = document.getElementById('chat-modal-container');
     if (chatModal) {
         chatModal.style.display = 'block';
@@ -698,7 +899,7 @@ async function fetchChatHistory(user) {
             messageElement.classList.add('chat-bubble');
 
             // Determine if the message is sent or received
-            if (message.sender === getUserIdFromToken(token)) {
+            if (normalizeObjectId(message.sender) === normalizeObjectId(getUserIdFromToken(token))) {
                 messageElement.classList.add('sent'); // Add 'sent' class for user's own messages
             } else {
                 messageElement.classList.add('received'); // Add 'received' class for other messages
@@ -718,9 +919,10 @@ async function fetchChatHistory(user) {
 
 function minimiseChat() {
     const chat = document.getElementById('chat');
+    if (!chat) return;
+
     const minimiseButton = document.getElementById('minimise-chat');
     const collapseSummary = document.getElementById('chat-collapse-summary');
-    const chatUsername = document.getElementById('chat-username');
     const isCollapsed = chat.classList.toggle('collapsed');
 
     if (minimiseButton) {
@@ -735,22 +937,30 @@ function minimiseChat() {
         collapseSummary.classList.toggle('hidden', !isCollapsed);
     }
 
-    if (chatUsername) {
-        const userName = selectedUser?.username || 'No user selected';
-        if (isCollapsed) {
-            chatUsername.parentElement.textContent = `Chat with ${userName}`;
-        } else {
-            chatUsername.parentElement.innerHTML = `Chat with <strong id="chat-username">${userName}</strong>`;
-        }
-    }
+    updateChatHeaderName();
 }
 
 
 function closeChatModal() {
-    
+    const chatModal = document.getElementById('chat');
     const chatModalContainer = document.getElementById('chat-modal-container');
-    const chatMessages = document.getElementById('modal-chat-messages');
-    const chatInput = document.getElementById('modal-chat-input');
+    const chatMessages = document.getElementById('chat-messages-container');
+    const chatInput = document.getElementById('chat-input');
+
+    if (chatModal) {
+        chatModal.style.display = 'none';
+        chatModal.classList.add('hidden');
+        chatModal.classList.remove('collapsed');
+    }
+
+    const collapseButton = document.getElementById('collapse-chat');
+    if (collapseButton) {
+        const icon = collapseButton.querySelector('.window-icon');
+        if (icon) {
+            icon.classList.add('window-icon-minimize');
+            icon.classList.remove('window-icon-expand');
+        }
+    }
 
     // Hide the chat modal
     if(chatModalContainer){
@@ -768,6 +978,7 @@ function closeChatModal() {
 
     // Deselect the user
     selectedUser = null; 
+    updateChatHeaderName();
     console.log('closeChatModal function called, chat modal closed');
 }
 
@@ -820,6 +1031,7 @@ async function sendChatMessage() {
         messageElement.classList.add('chat-bubble', 'sent');
         messageElement.innerText = messageContent;
         chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
         // Clear the input field
         chatInput.value = '';
         // Notify the chat button
@@ -829,6 +1041,16 @@ async function sendChatMessage() {
         alert('Failed to send message. Please try again.');
     }
 }
+
+function normalizeObjectId(value) {
+    if (!value) return '';
+    if (typeof value === 'object') {
+        if (value.$oid) return String(value.$oid);
+        if (value._id) return String(value._id);
+    }
+    return String(value);
+}
+
 async function fetchProfiles() {
     try {
         const response = await fetch('http://localhost:5000/profiles/profiles', {
@@ -870,17 +1092,25 @@ function filterProfiles() {
 }
 
 function renderProfiles(profiles) {
-    const profilesList = document.getElementById('profiles-list');
+    const profilesList = document.querySelector('#profiles-list .profiles-grid');
     if (!profilesList) {
-        console.error('Element with ID "profiles-list" not found in the DOM.');
+        console.error('Element with ID "profiles-list" .profiles-grid not found in the DOM.');
         return;
     }
 
     const safeProfiles = Array.isArray(profiles) ? profiles : [];
     profilesList.innerHTML = '';
 
+    // Add or remove single-profile class
+    if (safeProfiles.length === 1) {
+        profilesList.classList.add('single-profile');
+    } else {
+        profilesList.classList.remove('single-profile');
+    }
+
     if (safeProfiles.length === 0) {
         profilesList.innerHTML = '<div class="profile-empty">No profiles match your filter.</div>';
+        syncScrollbars();
         return;
     }
 
@@ -888,18 +1118,27 @@ function renderProfiles(profiles) {
         const imageUrl = profile.imageUrl
             ? `http://localhost:5000/${profile.imageUrl}` // Use correct path
             : 'default-placeholder.png'; // Default image if no profile picture
+        const profilePageUrl = resolveProfilePageUrl(profile);
+        const primaryButtonAction = profilePageUrl
+            ? 'openProfilePageOverlayFromButton(this)'
+            : 'expandProfile(this)';
+        const overlayButtonMarkup = profilePageUrl
+            ? `<button class="profile-overlay-open-button" onclick="openProfilePageOverlayFromButton(this)" data-overlay-url="${profilePageUrl}">Open ProdbyENNE</button>`
+            : '';
 
         const profileElement = document.createElement('div');
         profileElement.className = 'profile';
+        profileElement.dataset.profileName = profile.profileName || 'Profile';
         profileElement.innerHTML = `
-            <h3>${profile.profileName}</h3>
+            <h3 class="profile-title">${profile.profileName}</h3>
             <p>${profile.description}</p>
             <img src="${imageUrl}" alt="Profile Picture" />
-            <div class="profile-details" style="display: none;">
+            <div class="profile-details">
                 <p><strong>Type:</strong> ${profile.type || 'Personal'}</p>
                 <p><strong>Description:</strong> ${profile.description || 'No details provided.'}</p>
+                ${overlayButtonMarkup}
             </div>
-            <button class="profile-expand-button" onclick="expandProfile(this)" style="--clr: #7808d0">
+            <button class="profile-expand-button" onclick="${primaryButtonAction}" data-overlay-url="${profilePageUrl || ''}" style="--clr: #7808d0">
             <span class="button__icon-wrapper">
                 <svg
                 viewBox="0 0 14 15"
@@ -927,7 +1166,7 @@ function renderProfiles(profiles) {
                 ></path>
                 </svg>
             </span>
-            <span class="button-text">Expand Profile</span>
+            <span class="button-text">Open</span>
             </button>
 
             <!-- Hidden Modal for Expanded Profile -->
@@ -943,6 +1182,168 @@ function renderProfiles(profiles) {
         `;
         profilesList.appendChild(profileElement);
     });
+    
+    // Sync scrollbars after rendering
+    syncScrollbars();
+}
+
+function sanitizeProfilePageUrl(profilePageUrl) {
+    if (!profilePageUrl || typeof profilePageUrl !== 'string') {
+        return '';
+    }
+
+    const trimmedUrl = profilePageUrl.trim();
+    if (!trimmedUrl) {
+        return '';
+    }
+
+    const isAllowedUrl = trimmedUrl.startsWith('/') || trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://');
+    return isAllowedUrl ? trimmedUrl : '';
+}
+
+function resolveProfilePageUrl(profile) {
+    const explicitUrl = sanitizeProfilePageUrl(profile?.profilePageUrl);
+    if (explicitUrl) {
+        return explicitUrl;
+    }
+
+    const normalizedName = (profile?.profileName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (normalizedName.includes('prodby') && normalizedName.includes('enne')) {
+        return '/profiles/prodbyenne/index.html';
+    }
+
+    return '';
+}
+
+function ensureProfilePageOverlay() {
+    let overlay = document.getElementById('profile-page-overlay');
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'profile-page-overlay';
+    overlay.className = 'profile-page-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML = `
+        <div class="profile-page-overlay-backdrop" onclick="closeProfilePageOverlay()"></div>
+        <div class="profile-page-overlay-window" role="dialog" aria-modal="false" aria-label="Embedded profile page">
+            <div class="profile-page-overlay-header">
+                <span class="profile-page-overlay-title">ProdbyENNE</span>
+                <button class="profile-page-overlay-close" onclick="closeProfilePageOverlay()" aria-label="Close embedded page">Close</button>
+            </div>
+            <div class="profile-page-overlay-body is-loading">
+                <div class="profile-page-overlay-loading" aria-hidden="true">
+                    <span class="profile-page-overlay-spinner"></span>
+                    <span class="profile-page-overlay-loading-text">Loading embedded page...</span>
+                </div>
+                <iframe
+                    id="profile-page-overlay-iframe"
+                    class="profile-page-overlay-iframe"
+                    src="about:blank"
+                    title="Embedded profile page viewer"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                ></iframe>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function openProfilePageOverlayFromButton(button) {
+    const overlayUrl = sanitizeProfilePageUrl(button?.dataset?.overlayUrl || '');
+    if (!overlayUrl) {
+        alert('No embedded page URL is configured for this profile yet.');
+        return;
+    }
+
+    openProfilePageOverlay(overlayUrl);
+}
+
+function openProfilePageOverlay(profilePageUrl) {
+    const safeUrl = sanitizeProfilePageUrl(profilePageUrl);
+    if (!safeUrl) return;
+
+    const overlay = ensureProfilePageOverlay();
+    const overlayBody = overlay.querySelector('.profile-page-overlay-body');
+    const iframe = overlay.querySelector('#profile-page-overlay-iframe');
+    const loadingText = overlay.querySelector('.profile-page-overlay-loading-text');
+    if (!overlayBody || !iframe) return;
+
+    if (!iframe.dataset.loaderBound) {
+        iframe.addEventListener('load', () => {
+            if (iframe._overlayLoadTimeout) {
+                clearTimeout(iframe._overlayLoadTimeout);
+                iframe._overlayLoadTimeout = null;
+            }
+            overlayBody.classList.remove('is-loading');
+            overlayBody.classList.remove('is-timeout');
+            iframe.dataset.loaded = 'true';
+        });
+        iframe.dataset.loaderBound = 'true';
+    }
+
+    if (iframe._overlayLoadTimeout) {
+        clearTimeout(iframe._overlayLoadTimeout);
+        iframe._overlayLoadTimeout = null;
+    }
+
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    overlayBody.classList.add('is-loading');
+    overlayBody.classList.remove('is-timeout');
+
+    if (loadingText) {
+        loadingText.textContent = 'Loading embedded page...';
+    }
+
+    iframe.dataset.loaded = 'false';
+    iframe.src = safeUrl;
+
+    iframe._overlayLoadTimeout = setTimeout(() => {
+        if (iframe.dataset.loaded === 'true') return;
+        overlayBody.classList.add('is-timeout');
+        if (loadingText) {
+            loadingText.textContent = 'This page is taking longer than expected. Check the URL and try reopening this overlay.';
+        }
+    }, 8000);
+}
+
+function closeProfilePageOverlay() {
+    const overlay = document.getElementById('profile-page-overlay');
+    if (!overlay) return;
+
+    const overlayBody = overlay.querySelector('.profile-page-overlay-body');
+    const iframe = overlay.querySelector('#profile-page-overlay-iframe');
+    const loadingText = overlay.querySelector('.profile-page-overlay-loading-text');
+
+    if (iframe && iframe._overlayLoadTimeout) {
+        clearTimeout(iframe._overlayLoadTimeout);
+        iframe._overlayLoadTimeout = null;
+    }
+
+    if (overlayBody) {
+        overlayBody.classList.remove('is-loading');
+        overlayBody.classList.remove('is-timeout');
+    }
+
+    if (loadingText) {
+        loadingText.textContent = 'Loading embedded page...';
+    }
+
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+}
+
+function updateExpandedProfileTitle(profile, isExpanded) {
+    if (!profile) return;
+
+    const titleElement = profile.querySelector('.profile-title');
+    const baseName = profile.dataset.profileName || 'Profile';
+    if (!titleElement) return;
+
+    titleElement.textContent = baseName;
 }
 
 
@@ -950,25 +1351,161 @@ function expandProfile(button) {
     const profile = button.closest('.profile');
     if (!profile) return;
 
+    ensureProfileOverlay();
+
+    const shell = document.querySelector('.profile-view-shell');
+    const profilesGrid = profile.closest('.profiles-grid');
     const details = profile.querySelector('.profile-details');
     const buttonText = button.querySelector('.button-text');
+    const overlay = document.getElementById('profile-focus-overlay');
 
     if (!details) return;
 
-    const isHidden = details.style.display === 'none' || details.style.display === '';
-    details.style.display = isHidden ? 'block' : 'none';
-    details.classList.toggle('visible', isHidden);
+    const isOpening = !profile.classList.contains('profile-expanded');
+
+    // Keep one expanded profile active at a time.
+    document.querySelectorAll('.profile.profile-expanded').forEach((openProfile) => {
+        if (openProfile === profile) return;
+        openProfile.classList.remove('profile-expanded');
+
+        const openDetails = openProfile.querySelector('.profile-details');
+        if (openDetails) {
+            openDetails.classList.remove('visible');
+        }
+
+        const openButtonText = openProfile.querySelector('.button-text');
+        if (openButtonText) {
+            openButtonText.textContent = 'Open';
+        }
+
+        updateExpandedProfileTitle(openProfile, false);
+    });
+
+    profile.classList.toggle('profile-expanded', isOpening);
+    details.classList.toggle('visible', isOpening);
+
+    if (shell) {
+        const hasExpanded = !!document.querySelector('.profile.profile-expanded');
+        shell.classList.toggle('shell-expanded', hasExpanded);
+    }
+
+    if (profilesGrid) {
+        const hasExpanded = !!profilesGrid.querySelector('.profile.profile-expanded');
+        profilesGrid.classList.toggle('has-expanded-profile', hasExpanded);
+    }
+
+    if (overlay) {
+        overlay.classList.toggle('active', !!document.querySelector('.profile.profile-expanded'));
+    }
+
+    document.body.classList.toggle('profile-focus-active', !!document.querySelector('.profile.profile-expanded'));
 
     if (buttonText) {
-        buttonText.textContent = isHidden ? 'Collapse Profile' : 'Expand Profile';
+        buttonText.textContent = isOpening ? 'Close' : 'Open';
     }
+
+    updateExpandedProfileTitle(profile, isOpening);
 }
+
+function minimizeExpandedProfile() {
+    const expandedProfile = document.querySelector('.profile.profile-expanded');
+    const overlay = document.getElementById('profile-focus-overlay');
+    const shell = document.querySelector('.profile-view-shell');
+    const profilesGrid = document.querySelector('#profiles-list .profiles-grid');
+
+    if (!expandedProfile) return;
+
+    expandedProfile.classList.remove('profile-expanded');
+    const details = expandedProfile.querySelector('.profile-details');
+    const buttonText = expandedProfile.querySelector('.button-text');
+
+    if (details) {
+        details.classList.remove('visible');
+    }
+
+    if (buttonText) {
+        buttonText.textContent = 'Open';
+    }
+
+    updateExpandedProfileTitle(expandedProfile, false);
+
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+
+    if (shell) {
+        shell.classList.remove('shell-expanded');
+    }
+
+    if (profilesGrid) {
+        profilesGrid.classList.remove('has-expanded-profile');
+    }
+
+    document.body.classList.remove('profile-focus-active');
+}
+
+function ensureProfileOverlay() {
+    let overlay = document.getElementById('profile-focus-overlay');
+    if (overlay) return;
+
+    const shell = document.querySelector('.profile-view-shell');
+    if (!shell) return;
+
+    overlay = document.createElement('div');
+    overlay.id = 'profile-focus-overlay';
+    overlay.className = 'profile-focus-overlay';
+    overlay.addEventListener('click', minimizeExpandedProfile);
+    shell.appendChild(overlay);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        const pageOverlay = document.getElementById('profile-page-overlay');
+        if (pageOverlay && pageOverlay.classList.contains('is-open')) {
+            closeProfilePageOverlay();
+            return;
+        }
+        minimizeExpandedProfile();
+    }
+});
+
+// Sync scrollbar function to keep top and bottom scrollbars in sync
+function syncScrollbars() {
+    const syncScroller = document.getElementById('scrollbar-sync');
+    const profileRing = document.getElementById('profiles-list');
+    const profilesGrid = document.querySelector('#profiles-list .profiles-grid');
+    
+    if (!syncScroller || !profileRing || !profilesGrid) return;
+    
+    // Set the width of the sync scroller content to match the profiles grid
+    const syncContent = syncScroller.querySelector('.scrollbar-sync-content') || document.createElement('div');
+    syncContent.className = 'scrollbar-sync-content';
+    syncContent.style.width = profilesGrid.scrollWidth + 'px';
+    
+    if (!syncScroller.contains(syncContent)) {
+        syncScroller.innerHTML = '';
+        syncScroller.appendChild(syncContent);
+    }
+    
+    // Sync scroll events
+    profileRing.addEventListener('scroll', () => {
+        syncScroller.scrollLeft = profileRing.scrollLeft;
+    });
+    
+    syncScroller.addEventListener('scroll', () => {
+        profileRing.scrollLeft = syncScroller.scrollLeft;
+    });
+}
+
+// Initialize scroll sync when page loads
+document.addEventListener('DOMContentLoaded', syncScrollbars);
 
 
 async function addProfile() {
     const profileName = document.getElementById('profile-name').value; // Use profileName instead of name
     const description = document.getElementById('profile-description').value;
     const type = document.getElementById('profile-type').value;
+    const profilePageUrl = document.getElementById('profile-page-url')?.value?.trim() || '';
     const profilePictureInput = document.getElementById('profile-picture');
     const profilePicture = profilePictureInput.files[0];
 
@@ -981,6 +1518,7 @@ async function addProfile() {
     formData.append('profileName', profileName); // Use profileName
     formData.append('description', description);
     formData.append('type', type);
+    formData.append('profilePageUrl', profilePageUrl);
     if (profilePicture) {
         formData.append('profilePicture', profilePicture);
     }

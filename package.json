@@ -1,0 +1,9 @@
+{
+  "name": "3nn3twork-main",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "deploy:prodbyenne": "node ./scripts/deploy-prodbyenne.mjs",
+    "deploy:prodbyenne:smoke": "node ./scripts/deploy-prodbyenne.mjs --open"
+  }
+}
