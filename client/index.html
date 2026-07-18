@@ -3833,6 +3833,7 @@ function renderProfiles(profiles) {
     
     // Sync scrollbars after rendering
     syncScrollbars();
+    syncProfileFocusLockState();
 }
 
 function sanitizeProfilePageUrl(profilePageUrl) {
@@ -3983,11 +3984,39 @@ function closeProfilePageOverlay() {
         loadingText.textContent = 'Loading embedded page...';
     }
 
+    if (iframe) {
+        iframe.dataset.loaded = 'false';
+        iframe.src = 'about:blank';
+    }
+
     document.body.classList.remove('prodbyenne-overlay-open');
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden', 'true');
 
+    syncProfileFocusLockState();
+
     updateSiteMediaPlayerUI();
+}
+
+function syncProfileFocusLockState() {
+    const hasExpandedProfile = !!document.querySelector('.profile.profile-expanded');
+    const shell = document.querySelector('.profile-view-shell');
+    const profilesGrid = document.querySelector('#profiles-list .profiles-grid');
+    const overlay = document.getElementById('profile-focus-overlay');
+
+    document.body.classList.toggle('profile-focus-active', hasExpandedProfile);
+
+    if (shell) {
+        shell.classList.toggle('shell-expanded', hasExpandedProfile);
+    }
+
+    if (profilesGrid) {
+        profilesGrid.classList.toggle('has-expanded-profile', hasExpandedProfile);
+    }
+
+    if (overlay) {
+        overlay.classList.toggle('active', hasExpandedProfile);
+    }
 }
 
 function openProfileAdminEditFromButton(button) {
