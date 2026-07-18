@@ -17,6 +17,13 @@ const {
 
 module.exports = (io) => {
 const router = express.Router();
+const uploadDir = path.join(__dirname, '..', 'uploads');
+
+const ensureUploadDirExists = () => {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+};
 
 const DEFAULT_CONTENT = {
   beats: [],
@@ -373,7 +380,8 @@ async function cleanupRemovedAssets(previousContent = {}, nextContent = {}) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads'));
+    ensureUploadDirExists();
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const rawFolder = String(req.body?.folder || 'asset').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 30);
