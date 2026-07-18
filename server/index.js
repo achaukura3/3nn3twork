@@ -9,12 +9,37 @@ const mongoose = require('mongoose');
 
 const cors = require('cors');
 const User = require('./models/User');
+const path = require('path');
+const fs = require('fs');
+
+const clientPath = path.join(__dirname, '..', 'client');
+const port = Number(process.env.PORT) || 5000;
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/3nn3twork';
+
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const corsOriginValidator = (origin, callback) => {
+  if (!origin) {
+    callback(null, true);
+    return;
+  }
+
+  if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    callback(null, true);
+    return;
+  }
+
+  callback(new Error('CORS blocked for this origin'));
+};
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:5000'], // Allow the client served from either dev origin
+    origin: corsOriginValidator,
     methods: ['GET', 'POST'],
   },
 });
@@ -27,10 +52,6 @@ const messageRoutes = require('./routes/messageRoutes')(io);
 const profileRoutes = require('./routes/profileRoutes');
 const prodbyenneRoutes = require('./routes/prodbyenneRoutes')(io);
 
-const path = require('path');
-const fs = require('fs');
-const clientPath = path.join(__dirname, '..', 'client');
-
 async function emitUsersSnapshot() {
   const users = await User.find({}, 'username fullName profileImageUrl role isOnline');
   io.emit('users_updated', users);
@@ -38,7 +59,7 @@ async function emitUsersSnapshot() {
 
 
 app.use(express.json());
-app.use(cors()); 
+app.use(cors({ origin: corsOriginValidator }));
 
 app.get('/', (req, res) => {
   const indexPath = path.join(clientPath, 'index.html');
@@ -62,7 +83,7 @@ app.use('/diary', diaryRoutes);
 
 
 // MongoDB Connection
-mongoose.connect('mongodb://localhost:27017/3nn3twork', {
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -76,6 +97,17 @@ app.use('/messages', messageRoutes); // Message routes, e.g., /messages
 app.use('/friends', friendRoutes); // Friend-related routes, e.g., /friends/request
 app.use('/profiles', profileRoutes); // Profile routes, e.g., /profiles
 app.use('/prodbyenne', prodbyenneRoutes);
+
+app.get('*', (req, res) => {
+  const indexPath = path.join(clientPath, 'index.html');
+
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+    return;
+  }
+
+  res.status(404).json({ message: 'Frontend bundle not found' });
+});
 
 
 
@@ -155,8 +187,8 @@ module.exports = {
 
 
 // Start Server
-server.listen(5000, () => {
-  console.log('Server running on http://localhost:5000');
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
 

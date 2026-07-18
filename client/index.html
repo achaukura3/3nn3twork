@@ -507,7 +507,14 @@
     const bookingToastTimeoutMs = 5200;
     const bookingToastExitMs = 250;
         const CHAT_EMOJIS = ['😀', '😂', '😍', '😎', '🔥', '🎵', '💯', '🙌', '🙏', '❤️', '✨', '🚀', '🎧', '🎬', '👏', '🤝'];
-  const socket = io('http://localhost:5000'); // Ensure Socket.IO is initialized correctly
+  const API_BASE_URL = window.location.origin;
+  const toAbsoluteUrl = (value) => {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+      return new URL(raw.startsWith('/') ? raw : `/${raw}`, API_BASE_URL).toString();
+  };
+  const socket = io(API_BASE_URL);
 
     const siteMediaState = {
         playlist: [],
@@ -1356,7 +1363,7 @@ function updateUserAvatarChip() {
         return;
     }
 
-    const resolvedUrl = imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`;
+    const resolvedUrl = toAbsoluteUrl(imageUrl);
     image.src = resolvedUrl;
     previewImage.src = resolvedUrl;
     previewName.textContent = currentUserProfile?.fullName || currentUserProfile?.username || 'Profile Picture';
@@ -1408,7 +1415,7 @@ function populateProfileSidebar(profile) {
 
     const summaryImageUrl = String(safeProfile.profileImageUrl || '').trim();
     const resolvedProfileImageUrl = summaryImageUrl
-        ? (summaryImageUrl.startsWith('http') ? summaryImageUrl : `http://localhost:5000${summaryImageUrl}`)
+        ? toAbsoluteUrl(summaryImageUrl)
         : '';
 
     if (summaryAvatar) {
@@ -1562,7 +1569,7 @@ function toggleProfileSidebarMinimize() {
 async function fetchMyProfile() {
     if (!token) return;
 
-    const response = await fetch('http://localhost:5000/me', {
+    const response = await fetch('/me', {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -1840,7 +1847,7 @@ async function saveMyProfile() {
     }
 
     try {
-        const response = await fetch('http://localhost:5000/me', {
+        const response = await fetch('/me', {
             method: 'PUT',
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -1883,7 +1890,7 @@ async function deleteMyAccount() {
     }
 
     try {
-        const response = await fetch('http://localhost:5000/me', {
+        const response = await fetch('/me', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -1947,15 +1954,14 @@ function getMessageSenderId(message) {
 function resolveUserAvatarUrl(user) {
     const raw = String(user?.profileImageUrl || '').trim();
     if (!raw) return '';
-    return raw.startsWith('http') ? raw : `http://localhost:5000${raw}`;
+    return toAbsoluteUrl(raw);
 }
 
 function resolveChatMediaUrl(mediaUrl) {
     const raw = String(mediaUrl || '').trim();
     if (!raw) return '';
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-    if (raw.startsWith('/')) return `http://localhost:5000${raw}`;
-    return raw;
+    return toAbsoluteUrl(raw);
 }
 
 function getChatAvatarInitial(name) {
@@ -2471,7 +2477,7 @@ async function login() {
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('http://localhost:5000/login', {
+        const response = await fetch('/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -2647,7 +2653,7 @@ function setupSocketListeners() {
     try {
         const userId = getUserIdFromToken(token);
 
-        const response = await fetch('http://localhost:5000/logout', {
+        const response = await fetch('/logout', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -2728,7 +2734,7 @@ function setupSocketListeners() {
         payload.email = email;
         payload.contactNumber = contactNumber;
 
-        const response = await fetch('http://localhost:5000/signup', {
+        const response = await fetch('/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -2778,7 +2784,7 @@ function setupSocketListeners() {
 
         async function fetchUsers() {
             try {
-                const response = await fetch('http://localhost:5000/users', {
+                const response = await fetch('/users', {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -2858,7 +2864,7 @@ async function createPost() {
     try {
         console.log('JWT token being sent:', token); // Debugging: Ensure token is being sent
 
-        const response = await fetch('http://localhost:5000/diary/post', {
+        const response = await fetch('/diary/post', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -2889,7 +2895,7 @@ async function createPost() {
 
 async function fetchPosts() {
     try {
-        const response = await fetch('http://localhost:5000/diary/posts', {
+        const response = await fetch('/diary/posts', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -3218,7 +3224,7 @@ function openChat(user) {
 
 async function fetchChatHistory(user) {
     try {
-        const response = await fetch(`http://localhost:5000/messages/${user._id}`, {
+        const response = await fetch(`/messages/${user._id}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
             },
@@ -3356,7 +3362,7 @@ async function sendChatMessage() {
             formData.append('file', pendingChatMediaFile);
             formData.append('allowDownload', allowDownload ? 'true' : 'false');
 
-            const mediaResponse = await fetch('http://localhost:5000/messages/media', {
+            const mediaResponse = await fetch('/messages/media', {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -3385,7 +3391,7 @@ async function sendChatMessage() {
             return;
         }
 
-        const response = await fetch('http://localhost:5000/messages', {
+        const response = await fetch('/messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3434,7 +3440,7 @@ function normalizeObjectId(value) {
 
 async function fetchProfiles() {
     try {
-        const response = await fetch('http://localhost:5000/profiles/profiles', {
+        const response = await fetch('/profiles/profiles', {
             headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -3510,7 +3516,7 @@ function renderProfiles(profiles) {
             ? 'About'
             : (rawProfileName || 'Profile');
         const imageUrl = profile.imageUrl
-            ? `http://localhost:5000/${profile.imageUrl}` // Use correct path
+            ? toAbsoluteUrl(profile.imageUrl)
             : 'default-placeholder.png'; // Default image if no profile picture
         const profilePageUrl = resolveProfilePageUrl(profile);
         const isProdbyenneProfile = profilePageUrl === '/profiles/prodbyenne/index.html';
@@ -3817,7 +3823,7 @@ async function submitProfileAdminUpdate() {
     const nextPageUrl = pageUrlField.value.trim();
 
     try {
-        const response = await fetch(`http://localhost:5000/profiles/profiles/${profileId}`, {
+        const response = await fetch(`/profiles/profiles/${profileId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -4083,7 +4089,7 @@ async function addProfile() {
     }
 
     try {
-        const response = await fetch('http://localhost:5000/profiles/profiles', {
+        const response = await fetch('/profiles/profiles', {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -4145,7 +4151,7 @@ function getBookingStatusLabel(booking) {
 async function updateBookingStatus(bookingId, nextStatus) {
     if (!token || currentUserRole !== 'admin') return;
 
-    const response = await fetch(`http://localhost:5000/prodbyenne/bookings/${bookingId}/status`, {
+    const response = await fetch(`/prodbyenne/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -4301,8 +4307,8 @@ async function fetchBookingsForModal() {
     }
 
     const endpoint = currentUserRole === 'admin'
-        ? 'http://localhost:5000/prodbyenne/bookings'
-        : 'http://localhost:5000/prodbyenne/bookings/my';
+        ? '/prodbyenne/bookings'
+        : '/prodbyenne/bookings/my';
 
     const response = await fetch(endpoint, {
         headers: {
@@ -4329,8 +4335,8 @@ async function refreshBookingsNotifications() {
     }
 
     const endpoint = currentUserRole === 'admin'
-        ? 'http://localhost:5000/prodbyenne/bookings'
-        : 'http://localhost:5000/prodbyenne/bookings/my';
+        ? '/prodbyenne/bookings'
+        : '/prodbyenne/bookings/my';
 
     const response = await fetch(endpoint, {
         headers: {
@@ -4386,3 +4392,4 @@ function closeBookingsModal() {
   </script>
 </body>
 </html>
+
