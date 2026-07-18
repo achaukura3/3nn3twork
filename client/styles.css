@@ -2186,13 +2186,29 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   .floating-tools {
     top: 62px;
     left: 8px;
-    padding: 6px;
-    gap: 6px;
+    padding: 8px;
+    gap: 8px;
+    border-radius: 18px;
   }
 
   .buttons {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
+  }
+
+  .floating-tools-handle {
+    padding: 6px 6px 4px;
+    min-height: 38px;
+  }
+
+  .floating-tools-toggle {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .floating-tools-title {
+    font-size: 16px;
   }
 
   .profile-sidebar {
@@ -2233,7 +2249,7 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   #chats-button:hover,
   #chat-toggle-button:hover,
   #bookings-button:hover {
-    width: 40px;
+    width: 46px;
     border-radius: 50%;
   }
 
@@ -2562,6 +2578,14 @@ body.profile-focus-active {
   overflow: hidden;
 }
 
+body.profile-focus-active.site-media-player-enabled {
+  padding-bottom: 0;
+}
+
+body.profile-focus-active .site-media-player {
+  display: none;
+}
+
 body.profile-focus-active .user-avatar-chip,
 body.profile-focus-active .user-avatar-preview,
 body.profile-focus-active .floating-tools,
@@ -2866,11 +2890,15 @@ body.profile-focus-active .theme {
     width: calc(100vw - 16px);
     height: calc(100vh - 16px);
     max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 14px;
     transform: none;
   }
 
   .profile.profile-expanded .profile-expanded-window {
+    height: auto;
+    min-height: 100%;
     gap: 12px;
     padding: 14px;
   }
@@ -2884,6 +2912,7 @@ body.profile-focus-active .theme {
     border-left: 0;
     border-top: 1px solid rgba(232, 221, 248, 0.12);
     padding-top: 14px;
+    overflow: visible;
   }
 
   .profile.profile-expanded .profile-expanded-description {
@@ -2925,10 +2954,14 @@ body.profile-focus-active .theme {
 
   .profile.profile-expanded {
     height: calc(100vh - 16px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 12px;
   }
 
   .profile.profile-expanded .profile-expanded-window {
+    height: auto;
+    min-height: 100%;
     padding: 12px;
     gap: 10px;
   }
@@ -2949,6 +2982,7 @@ body.profile-focus-active .theme {
 
   .profile.profile-expanded .profile-expanded-copy {
     padding-top: 12px;
+    overflow: visible;
   }
 
   .profile.profile-expanded .profile-expanded-description {
@@ -4254,6 +4288,14 @@ body.prodbyenne-overlay-open .site-media-player {
   display: none;
 }
 
+body.chat-open.site-media-player-enabled {
+  padding-bottom: 0;
+}
+
+body.chat-open .site-media-player {
+  display: none;
+}
+
 .site-media-player {
   position: fixed;
   left: 50%;
@@ -4650,6 +4692,10 @@ body.theme-light .chat-download-link {
     padding: 9px;
   }
 
+  body.chat-open .site-media-player {
+    display: none;
+  }
+
   .site-media-controls {
     width: 100%;
     justify-content: space-between;
@@ -4669,6 +4715,21 @@ body.theme-light #logout-button {
 
 body.theme-light #logout-button:hover {
   background-color: #3a0f23;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .floating-tools .buttons[data-tooltip]::after,
+  .floating-tools .buttons[data-tooltip]::before {
+    display: none;
+  }
+
+  .floating-tools.is-collapsed:hover .floating-tools-items {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: scaleY(0.96);
+    pointer-events: none;
+  }
 }
 
 @media (max-width: 1200px) {

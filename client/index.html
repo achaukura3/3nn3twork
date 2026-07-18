@@ -2416,9 +2416,12 @@ function handleIncomingBookingsCleared() {
             updateBookingsNotificationBadge();
             updateUsersOnlineNotificationBadge();
             clearBookingToasts();
+            document.body.classList.remove('chat-open');
         } else if (userRole !== 'admin' && addProfileModal) {
             addProfileModal.style.display = 'none';
         }
+
+        updateChatOverlayState();
 
         updateLoginMusicStartOverlayVisibility();
     }
@@ -2906,6 +2909,7 @@ function toggleChatModal() {
     chatModal.style.display = 'block';
     requestAnimationFrame(() => {
         chatModal.classList.add('is-open');
+        updateChatOverlayState();
     });
     fetchUsers(); 
 }
@@ -2954,6 +2958,7 @@ function openUsersModal() {
     usersModal.style.display = 'block';
     requestAnimationFrame(() => {
         usersModal.classList.add('is-open');
+        updateChatOverlayState();
     });
     fetchUsers();
 }
@@ -2971,6 +2976,7 @@ function closeUsers() {
     usersModal._closeTimer = setTimeout(() => {
         usersModal.style.display = 'none';
         usersModal._closeTimer = null;
+        updateChatOverlayState();
     }, 280);
 }
 function minimiseUsers() {
@@ -3191,6 +3197,8 @@ function openChat(user) {
     } else {
         console.error('Chat modal container element is missing');
     }
+
+    updateChatOverlayState();
 }
 
 
@@ -3298,6 +3306,7 @@ function closeChatModal() {
     // Deselect the user
     selectedUser = null; 
     updateChatHeaderName();
+    updateChatOverlayState();
     console.log('closeChatModal function called, chat modal closed');
 }
 
@@ -3311,6 +3320,21 @@ function toggleChat() {
     } else {
         chat.classList.add("hidden");
     }
+
+    updateChatOverlayState();
+}
+
+function updateChatOverlayState() {
+    const chatPanel = document.getElementById('chat');
+    const usersModal = document.getElementById('chat-modal');
+    const isChatPanelVisible = !!chatPanel
+        && chatPanel.style.display !== 'none'
+        && !chatPanel.classList.contains('hidden');
+    const isUsersModalVisible = !!usersModal
+        && usersModal.style.display !== 'none'
+        && usersModal.classList.contains('is-open');
+
+    document.body.classList.toggle('chat-open', isChatPanelVisible || isUsersModalVisible);
 }
 
 async function sendChatMessage() {
