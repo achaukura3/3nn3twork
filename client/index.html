@@ -2232,11 +2232,6 @@ function updateUsersOnlineNotificationBadge() {
         badge.classList.remove('hidden');
         badge.classList.add('is-unread');
         badge.title = `${unreadMessageTotal} unread message${unreadMessageTotal === 1 ? '' : 's'}`;
-    } else if (count > 0) {
-        badge.textContent = String(count);
-        badge.classList.remove('hidden');
-        badge.classList.remove('is-unread');
-        badge.title = `${count} user${count === 1 ? '' : 's'} online`;
     } else {
         badge.textContent = '0';
         badge.classList.add('hidden');
