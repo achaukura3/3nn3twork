@@ -2654,7 +2654,7 @@ body.profile-focus-active .theme {
   top: 50%;
   left: 50%;
   width: min(960px, calc(100vw - 24px));
-  height: min(82vh, calc(100vh - 24px));
+  height: min(80vh, calc(100vh - 24px));
   max-width: none;
   max-height: calc(100vh - 24px);
   min-height: 0;
@@ -2664,12 +2664,13 @@ body.profile-focus-active .theme {
   transform: translate(-50%, -50%) scale(1);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(200, 0, 255, 0.5);
   display: grid;
-  grid-template-columns: minmax(180px, 32vw) minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 30%) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 12px 24px;
-  padding: 20px;
+  gap: 12px 18px;
+  padding: 18px;
   text-align: left;
   align-items: start;
+  align-content: start;
   box-sizing: border-box;
 }
 
@@ -2727,7 +2728,8 @@ body.profile-focus-active .theme {
   width: 100%;
   align-self: stretch;
   font-size: 15px;
-  padding: 14px;
+  line-height: 1.45;
+  padding: 12px;
   min-height: 0;
   max-height: none;
   overflow-y: auto;
@@ -2783,16 +2785,16 @@ body.profile-focus-active .theme {
     height: calc(100vh - 16px);
     max-height: calc(100vh - 16px);
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(180px, 34vh) auto minmax(0, 1fr) auto;
-    padding: 16px;
-    gap: 12px;
+    grid-template-rows: minmax(160px, 28vh) auto minmax(0, 1fr) auto;
+    padding: 14px;
+    gap: 10px;
     transform: none;
   }
 
   .profile.profile-expanded img {
     grid-column: 1;
     grid-row: 1;
-    max-height: 36vh;
+    max-height: 30vh;
   }
 
   .profile.profile-expanded h3 {
@@ -2808,6 +2810,11 @@ body.profile-focus-active .theme {
   .profile.profile-expanded .profile-expand-button {
     grid-column: 1;
     grid-row: 4;
+  }
+
+  .profile.profile-expanded .profile-details {
+    padding: 10px 12px;
+    font-size: 14px;
   }
 }
 
@@ -2841,6 +2848,22 @@ body.profile-focus-active .theme {
 
   .profile-admin-edit-icon {
     font-size: 16px;
+  }
+
+  .profile.profile-expanded {
+    height: calc(100vh - 16px);
+    padding: 12px;
+    gap: 8px;
+    grid-template-rows: minmax(150px, 24vh) auto minmax(0, 1fr) auto;
+  }
+
+  .profile.profile-expanded img {
+    max-height: 24vh;
+  }
+
+  .profile.profile-expanded .profile-details {
+    padding: 10px;
+    font-size: 13px;
   }
 }
 
