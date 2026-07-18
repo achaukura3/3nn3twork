@@ -297,6 +297,17 @@ function isCloudinaryAsset(asset) {
   return String(asset?.meta?.provider || '').toLowerCase() === 'cloudinary' && String(asset?.meta?.publicId || '').trim();
 }
 
+function isLocalUploadAsset(asset) {
+  const provider = String(asset?.meta?.provider || '').toLowerCase();
+  const url = String(asset?.url || '').trim();
+
+  if (provider === 'local') {
+    return true;
+  }
+
+  return url.startsWith('/uploads/');
+}
+
 function getAssetIdentity(asset) {
   const provider = String(asset?.meta?.provider || '').toLowerCase();
   const publicId = String(asset?.meta?.publicId || '').trim();
@@ -307,6 +318,10 @@ function getAssetIdentity(asset) {
   }
 
   if (provider === 'local' && url) {
+    return `local:${url}`;
+  }
+
+  if (url.startsWith('/uploads/')) {
     return `local:${url}`;
   }
 
@@ -366,7 +381,7 @@ async function cleanupRemovedAssets(previousContent = {}, nextContent = {}) {
         continue;
       }
 
-      if (String(asset?.meta?.provider || '').toLowerCase() === 'local') {
+      if (isLocalUploadAsset(asset)) {
         const localPath = resolveLocalUploadPathFromUrl(asset.url);
         if (localPath) {
           await removeLocalFileIfExists(localPath);
