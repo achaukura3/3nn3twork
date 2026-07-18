@@ -1,11 +1,91 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 const multer = require('multer');
 const authenticateToken = require('../middleware/auth');
 const Profile = require('../models/Profile');
 const User = require('../models/User');
+const {
+    isCloudinaryReady,
+    uploadImageFromPath,
+    deleteAssetByPublicId,
+} = require('../utils/cloudinary');
 
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
+
+const uploadStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, '..', 'uploads'));
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname || '').slice(0, 10);
+        const unique = crypto.randomBytes(8).toString('hex');
+        cb(null, `admin-profile-${Date.now()}-${unique}${ext}`);
+    },
+});
+
+const upload = multer({ storage: uploadStorage });
+
+const removeLocalFileIfExists = async (filePath) => {
+    if (!filePath) return;
+
+    try {
+        await fs.promises.unlink(filePath);
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.warn(`Local file cleanup warning for ${filePath}: ${error.message}`);
+        }
+    }
+};
+
+const resolveLocalUploadPathFromUrl = (urlValue) => {
+    const normalized = String(urlValue || '').trim();
+    if (!normalized.startsWith('/uploads/')) {
+        return '';
+    }
+
+    const fileName = normalized.slice('/uploads/'.length);
+    if (!fileName) {
+        return '';
+    }
+
+    return path.join(__dirname, '..', 'uploads', fileName);
+};
+
+const buildProfileImagePayloadFromUpload = async (file) => {
+    if (!file) return null;
+
+    if (isCloudinaryReady()) {
+        const uploadResult = await uploadImageFromPath(file.path, {
+            folder: '3nn3twork/admin-profiles',
+        });
+
+        await removeLocalFileIfExists(file.path);
+
+        return {
+            imageUrl: uploadResult.secure_url,
+            imageMeta: {
+                provider: 'cloudinary',
+                publicId: uploadResult.public_id,
+                resourceType: uploadResult.resource_type,
+                format: uploadResult.format,
+                bytes: uploadResult.bytes,
+            },
+        };
+    }
+
+    return {
+        imageUrl: `/uploads/${file.filename}`,
+        imageMeta: {
+            provider: 'local',
+            publicId: file.filename,
+            resourceType: 'image',
+            format: path.extname(file.filename).replace('.', ''),
+            bytes: file.size,
+        },
+    };
+};
 
 router.post('/profiles', authenticateToken, upload.single('profilePicture'), async (req, res) => {
   try {
@@ -13,12 +93,13 @@ router.post('/profiles', authenticateToken, upload.single('profilePicture'), asy
             return res.status(403).json({ message: 'Only admins can create profiles' });
         }
 
-    const { profileName, description, type, profilePageUrl } = req.body; // Access profileName from req.body
-      const imageUrl = req.file ? req.file.path : null; // Use file path if a profile picture is uploaded
+        const { profileName, description, type, profilePageUrl } = req.body;
 
       if (!profileName) {
           return res.status(400).json({ message: 'Profile name is required' });
       }
+
+      const uploadedImage = await buildProfileImagePayloadFromUpload(req.file);
 
       const newProfile = new Profile({
           user: req.user.id,
@@ -26,7 +107,8 @@ router.post('/profiles', authenticateToken, upload.single('profilePicture'), asy
           description,
           type,
           profilePageUrl,
-          imageUrl,
+          imageUrl: uploadedImage?.imageUrl || null,
+          imageMeta: uploadedImage?.imageMeta,
       });
 
       await newProfile.save();
@@ -64,6 +146,14 @@ router.put('/profiles/:id', authenticateToken, upload.single('profilePicture'), 
             return res.status(403).json({ message: 'Only admins can update profiles' });
         }
 
+    const profile = await Profile.findById(req.params.id);
+    if (!profile) {
+        if (req.file?.path) {
+            await removeLocalFileIfExists(req.file.path);
+        }
+        return res.status(404).json({ message: 'Profile not found' });
+    }
+
     const { profileName, description, type, profilePageUrl } = req.body;
     const updateFields = {
         profileName,
@@ -72,21 +162,31 @@ router.put('/profiles/:id', authenticateToken, upload.single('profilePicture'), 
         profilePageUrl,
     };
 
-    if (req.file?.path) {
-        updateFields.imageUrl = req.file.path;
+    if (req.file) {
+        const previousProvider = profile.imageMeta?.provider;
+        const previousPublicId = profile.imageMeta?.publicId;
+        const previousLocalPath = resolveLocalUploadPathFromUrl(profile.imageUrl);
+
+        const uploadedImage = await buildProfileImagePayloadFromUpload(req.file);
+        updateFields.imageUrl = uploadedImage?.imageUrl || null;
+        updateFields.imageMeta = uploadedImage?.imageMeta;
+
+        if (previousProvider === 'cloudinary' && previousPublicId && previousPublicId !== uploadedImage?.imageMeta?.publicId) {
+            await deleteAssetByPublicId(previousPublicId);
+        }
+
+        if (previousProvider === 'local' && previousLocalPath) {
+            await removeLocalFileIfExists(previousLocalPath);
+        }
     }
 
-      const profile = await Profile.findByIdAndUpdate(
+      const updatedProfile = await Profile.findByIdAndUpdate(
           req.params.id,
           updateFields,
           { new: true }
       );
 
-      if (!profile) {
-          return res.status(404).json({ message: 'Profile not found' });
-      }
-
-      res.status(200).json({ message: 'Profile updated successfully', profile });
+      res.status(200).json({ message: 'Profile updated successfully', profile: updatedProfile });
   } catch (error) {
       console.error('Error updating profile:', error);
       res.status(500).json({ message: 'Failed to update profile', error: error.message });
@@ -105,6 +205,15 @@ router.delete('/profiles/:id', authenticateToken, async (req, res) => {
 
       if (!profile) {
           return res.status(404).json({ message: 'Profile not found or unauthorized' });
+      }
+
+      if (profile.imageMeta?.provider === 'cloudinary' && profile.imageMeta?.publicId) {
+          await deleteAssetByPublicId(profile.imageMeta.publicId);
+      }
+
+      if (profile.imageMeta?.provider === 'local') {
+          const localPath = resolveLocalUploadPathFromUrl(profile.imageUrl);
+          await removeLocalFileIfExists(localPath);
       }
 
       res.status(200).json({ message: 'Profile deleted successfully' });

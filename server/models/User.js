@@ -14,6 +14,13 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, trim: true, lowercase: true, required: true },
   contactNumber: { type: String, trim: true, required: true },
   profileImageUrl: { type: String, trim: true },
+  profileImageMeta: {
+    provider: { type: String, trim: true },
+    publicId: { type: String, trim: true },
+    resourceType: { type: String, trim: true },
+    format: { type: String, trim: true },
+    bytes: { type: Number },
+  },
   isOnline: { type: Boolean, default: false },
   diaries: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Diary' }],
  

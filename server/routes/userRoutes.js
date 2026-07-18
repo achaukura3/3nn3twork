@@ -3,9 +3,15 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 const multer = require('multer');
 const User = require('../models/User');
 const authenticateToken = require('../middleware/auth');
+const {
+  isCloudinaryReady,
+  uploadImageFromPath,
+  deleteAssetByPublicId,
+} = require('../utils/cloudinary');
 
 module.exports = (io) => {
 const router = express.Router();
@@ -22,6 +28,32 @@ const uploadStorage = multer.diskStorage({
 });
 
 const upload = multer({ storage: uploadStorage });
+
+const removeLocalFileIfExists = async (filePath) => {
+  if (!filePath) return;
+
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.warn(`Local file cleanup warning for ${filePath}: ${error.message}`);
+    }
+  }
+};
+
+const resolveLocalUploadPathFromUrl = (urlValue) => {
+  const normalized = String(urlValue || '').trim();
+  if (!normalized.startsWith('/uploads/')) {
+    return '';
+  }
+
+  const fileName = normalized.slice('/uploads/'.length);
+  if (!fileName) {
+    return '';
+  }
+
+  return path.join(__dirname, '..', 'uploads', fileName);
+};
 
 async function emitUsersSnapshot() {
   if (!io) return;
@@ -206,7 +238,52 @@ router.post('/login', async (req, res) => {
       if (typeof req.body?.contactNumber === 'string') user.contactNumber = req.body.contactNumber.trim();
 
       if (req.file?.filename) {
-        user.profileImageUrl = `/uploads/${req.file.filename}`;
+        const previousImageUrl = user.profileImageUrl;
+        const previousProvider = user.profileImageMeta?.provider;
+        const previousPublicId = user.profileImageMeta?.publicId;
+        const previousLocalPath = resolveLocalUploadPathFromUrl(previousImageUrl);
+
+        if (isCloudinaryReady()) {
+          const uploadResult = await uploadImageFromPath(req.file.path, {
+            folder: '3nn3twork/profile-images',
+          });
+
+          user.profileImageUrl = uploadResult.secure_url;
+          user.profileImageMeta = {
+            provider: 'cloudinary',
+            publicId: uploadResult.public_id,
+            resourceType: uploadResult.resource_type,
+            format: uploadResult.format,
+            bytes: uploadResult.bytes,
+          };
+
+          await removeLocalFileIfExists(req.file.path);
+
+          if (previousProvider === 'cloudinary' && previousPublicId && previousPublicId !== uploadResult.public_id) {
+            await deleteAssetByPublicId(previousPublicId);
+          }
+
+          if (previousProvider === 'local' && previousLocalPath) {
+            await removeLocalFileIfExists(previousLocalPath);
+          }
+        } else {
+          user.profileImageUrl = `/uploads/${req.file.filename}`;
+          user.profileImageMeta = {
+            provider: 'local',
+            publicId: req.file.filename,
+            resourceType: 'image',
+            format: path.extname(req.file.filename).replace('.', ''),
+            bytes: req.file.size,
+          };
+
+          if (previousProvider === 'cloudinary' && previousPublicId) {
+            await deleteAssetByPublicId(previousPublicId);
+          }
+
+          if (previousProvider === 'local' && previousLocalPath && previousLocalPath !== req.file.path) {
+            await removeLocalFileIfExists(previousLocalPath);
+          }
+        }
       }
 
       await user.save();
@@ -240,6 +317,15 @@ router.post('/login', async (req, res) => {
       const deletedUser = await User.findByIdAndDelete(req.user.id);
       if (!deletedUser) {
         return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (deletedUser.profileImageMeta?.provider === 'cloudinary' && deletedUser.profileImageMeta?.publicId) {
+        await deleteAssetByPublicId(deletedUser.profileImageMeta.publicId);
+      }
+
+      if (deletedUser.profileImageMeta?.provider === 'local') {
+        const localPath = resolveLocalUploadPathFromUrl(deletedUser.profileImageUrl);
+        await removeLocalFileIfExists(localPath);
       }
 
       console.log(`Account deleted: userId=${req.user.id}; reason=${reason}`);

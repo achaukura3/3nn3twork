@@ -1,5 +1,16 @@
 const mongoose = require('mongoose');
 
+const AssetMetaSchema = new mongoose.Schema(
+  {
+    provider: { type: String, default: '' },
+    publicId: { type: String, default: '' },
+    resourceType: { type: String, default: '' },
+    format: { type: String, default: '' },
+    bytes: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const BeatSchema = new mongoose.Schema(
   {
     id: { type: Number, required: true },
@@ -10,6 +21,7 @@ const BeatSchema = new mongoose.Schema(
     duration: { type: String, default: '' },
     plays: { type: String, default: '0' },
     audioUrl: { type: String, default: '' },
+    audioMeta: { type: AssetMetaSchema, default: undefined },
     comment: { type: String, default: '' },
   },
   { _id: false }
@@ -22,7 +34,9 @@ const VideoSchema = new mongoose.Schema(
     type: { type: String, default: '' },
     year: { type: String, default: '' },
     img: { type: String, default: '' },
+    imgMeta: { type: AssetMetaSchema, default: undefined },
     videoUrl: { type: String, default: '' },
+    videoMeta: { type: AssetMetaSchema, default: undefined },
     comment: { type: String, default: '' },
   },
   { _id: false }
@@ -31,6 +45,7 @@ const VideoSchema = new mongoose.Schema(
 const HeroSchema = new mongoose.Schema(
   {
     backgroundImg: { type: String, default: '' },
+    backgroundImgMeta: { type: AssetMetaSchema, default: undefined },
     tagline: { type: String, default: '' },
     bio: { type: String, default: '' },
   },
@@ -40,6 +55,7 @@ const HeroSchema = new mongoose.Schema(
 const AboutSchema = new mongoose.Schema(
   {
     photo: { type: String, default: '' },
+    photoMeta: { type: AssetMetaSchema, default: undefined },
     bio1: { type: String, default: '' },
     bio2: { type: String, default: '' },
     bio3: { type: String, default: '' },

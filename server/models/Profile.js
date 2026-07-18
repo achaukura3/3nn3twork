@@ -7,6 +7,13 @@ const profileSchema = new mongoose.Schema({
     type: { type: String, enum: ['business', 'personal'], default: 'personal' },
     profilePageUrl: { type: String },
     imageUrl: { type: String },
+    imageMeta: {
+        provider: { type: String, trim: true },
+        publicId: { type: String, trim: true },
+        resourceType: { type: String, trim: true },
+        format: { type: String, trim: true },
+        bytes: { type: Number },
+    },
     createdAt: { type: Date, default: Date.now },
 });
 

@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
@@ -8,6 +9,11 @@ const authenticateToken = require('../middleware/auth');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const ProdbyenneContent = require('../models/ProdbyenneContent');
+const {
+  isCloudinaryReady,
+  uploadImageFromPath,
+  deleteAssetByPublicId,
+} = require('../utils/cloudinary');
 
 module.exports = (io) => {
 const router = express.Router();
@@ -30,6 +36,30 @@ const DEFAULT_CONTENT = {
 
 function sanitizeString(value, fallback = '') {
   return typeof value === 'string' ? value : fallback;
+}
+
+function sanitizeAssetMeta(input = {}) {
+  if (!input || typeof input !== 'object') {
+    return undefined;
+  }
+
+  const provider = sanitizeString(input.provider).trim();
+  const publicId = sanitizeString(input.publicId).trim();
+  const resourceType = sanitizeString(input.resourceType).trim();
+  const format = sanitizeString(input.format).trim();
+  const bytes = Number(input.bytes) || 0;
+
+  if (!provider && !publicId && !resourceType && !format && !bytes) {
+    return undefined;
+  }
+
+  return {
+    provider,
+    publicId,
+    resourceType,
+    format,
+    bytes,
+  };
 }
 
 function resolveLegacyVideoUrl(input = {}) {
@@ -60,6 +90,7 @@ function normalizeBeat(input, fallbackId) {
     duration: sanitizeString(input.duration),
     plays: sanitizeString(input.plays, '0'),
     audioUrl: sanitizeString(input.audioUrl),
+    audioMeta: sanitizeAssetMeta(input.audioMeta),
     comment: sanitizeString(input.comment),
   };
 }
@@ -71,7 +102,9 @@ function normalizeVideo(input, fallbackId) {
     type: sanitizeString(input.type),
     year: sanitizeString(input.year),
     img: sanitizeString(input.img),
+    imgMeta: sanitizeAssetMeta(input.imgMeta),
     videoUrl: resolveLegacyVideoUrl(input),
+    videoMeta: sanitizeAssetMeta(input.videoMeta),
     comment: sanitizeString(input.comment),
   };
 }
@@ -85,11 +118,13 @@ function normalizeContent(input = {}) {
     videos: videos.map((video, index) => normalizeVideo(video || {}, index + 1)),
     hero: {
       backgroundImg: sanitizeString(input.hero?.backgroundImg, DEFAULT_CONTENT.hero.backgroundImg),
+      backgroundImgMeta: sanitizeAssetMeta(input.hero?.backgroundImgMeta),
       tagline: sanitizeString(input.hero?.tagline, DEFAULT_CONTENT.hero.tagline),
       bio: sanitizeString(input.hero?.bio, DEFAULT_CONTENT.hero.bio),
     },
     about: {
       photo: sanitizeString(input.about?.photo, DEFAULT_CONTENT.about.photo),
+      photoMeta: sanitizeAssetMeta(input.about?.photoMeta),
       bio1: sanitizeString(input.about?.bio1, DEFAULT_CONTENT.about.bio1),
       bio2: sanitizeString(input.about?.bio2, DEFAULT_CONTENT.about.bio2),
       bio3: sanitizeString(input.about?.bio3, DEFAULT_CONTENT.about.bio3),
@@ -212,6 +247,130 @@ function isAllowedUploadForFolder(folder, file) {
   return true;
 }
 
+const removeLocalFileIfExists = async (filePath) => {
+  if (!filePath) return;
+
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.warn(`Local file cleanup warning for ${filePath}: ${error.message}`);
+    }
+  }
+};
+
+function getCloudinaryFolderForUpload(rawFolder) {
+  const safeFolder = String(rawFolder || 'asset').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 30) || 'asset';
+  return `3nn3twork/prodbyenne/${safeFolder}`;
+}
+
+function getCloudinaryResourceTypeForUpload(rawFolder) {
+  const safeFolder = String(rawFolder || '').toLowerCase();
+  if (safeFolder === 'audio' || safeFolder === 'videos') {
+    return 'video';
+  }
+  return 'image';
+}
+
+function resolveLocalUploadPathFromUrl(urlValue) {
+  const normalized = String(urlValue || '').trim();
+  if (!normalized.startsWith('/uploads/')) {
+    return '';
+  }
+
+  const fileName = normalized.slice('/uploads/'.length);
+  if (!fileName) {
+    return '';
+  }
+
+  return path.join(__dirname, '..', 'uploads', fileName);
+}
+
+function isCloudinaryAsset(asset) {
+  return String(asset?.meta?.provider || '').toLowerCase() === 'cloudinary' && String(asset?.meta?.publicId || '').trim();
+}
+
+function getAssetIdentity(asset) {
+  const provider = String(asset?.meta?.provider || '').toLowerCase();
+  const publicId = String(asset?.meta?.publicId || '').trim();
+  const url = String(asset?.url || '').trim();
+
+  if (provider === 'cloudinary' && publicId) {
+    return `cloudinary:${publicId}`;
+  }
+
+  if (provider === 'local' && url) {
+    return `local:${url}`;
+  }
+
+  return url ? `url:${url}` : '';
+}
+
+function collectTrackedAssets(contentLike = {}) {
+  const assets = [];
+
+  const beats = Array.isArray(contentLike.beats) ? contentLike.beats : [];
+  beats.forEach((beat) => {
+    assets.push({
+      url: beat?.audioUrl,
+      meta: beat?.audioMeta,
+    });
+  });
+
+  const videos = Array.isArray(contentLike.videos) ? contentLike.videos : [];
+  videos.forEach((video) => {
+    assets.push({
+      url: video?.img,
+      meta: video?.imgMeta,
+    });
+    assets.push({
+      url: video?.videoUrl,
+      meta: video?.videoMeta,
+    });
+  });
+
+  assets.push({
+    url: contentLike.hero?.backgroundImg,
+    meta: contentLike.hero?.backgroundImgMeta,
+  });
+
+  assets.push({
+    url: contentLike.about?.photo,
+    meta: contentLike.about?.photoMeta,
+  });
+
+  return assets.filter((asset) => String(asset?.url || '').trim().length > 0);
+}
+
+async function cleanupRemovedAssets(previousContent = {}, nextContent = {}) {
+  const previousAssets = collectTrackedAssets(previousContent);
+  const nextAssets = collectTrackedAssets(nextContent);
+  const nextIdentities = new Set(nextAssets.map(getAssetIdentity).filter(Boolean));
+
+  for (const asset of previousAssets) {
+    const identity = getAssetIdentity(asset);
+    if (!identity || nextIdentities.has(identity)) {
+      continue;
+    }
+
+    try {
+      if (isCloudinaryAsset(asset)) {
+        await deleteAssetByPublicId(asset.meta.publicId);
+        continue;
+      }
+
+      if (String(asset?.meta?.provider || '').toLowerCase() === 'local') {
+        const localPath = resolveLocalUploadPathFromUrl(asset.url);
+        if (localPath) {
+          await removeLocalFileIfExists(localPath);
+        }
+      }
+    } catch (error) {
+      console.warn(`Asset cleanup warning for ${identity}: ${error.message}`);
+    }
+  }
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '..', 'uploads'));
@@ -255,12 +414,14 @@ router.get('/content', async (req, res) => {
 router.post('/content', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const content = await getOrCreateContent();
+    const previousContent = content.toObject();
     const normalized = normalizeContent(req.body);
     content.beats = normalized.beats;
     content.videos = normalized.videos;
     content.hero = normalized.hero;
     content.about = normalized.about;
     await content.save();
+    await cleanupRemovedAssets(previousContent, content.toObject());
     return res.json({
       beats: content.beats,
       videos: content.videos,
@@ -275,12 +436,14 @@ router.post('/content', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/content', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const content = await getOrCreateContent();
+    const previousContent = content.toObject();
     const normalized = normalizeContent(req.body);
     content.beats = normalized.beats;
     content.videos = normalized.videos;
     content.hero = normalized.hero;
     content.about = normalized.about;
     await content.save();
+    await cleanupRemovedAssets(previousContent, content.toObject());
     return res.json({
       beats: content.beats,
       videos: content.videos,
@@ -308,6 +471,7 @@ router.post('/beats', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/beats/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const content = await getOrCreateContent();
+    const previousContent = content.toObject();
     const beatId = Number(req.params.id);
     const index = content.beats.findIndex((beat) => Number(beat.id) === beatId);
     if (index === -1) {
@@ -317,6 +481,7 @@ router.put('/beats/:id', authenticateToken, requireAdmin, async (req, res) => {
     const current = content.beats[index].toObject();
     content.beats[index] = normalizeBeat({ ...current, ...(req.body || {}), id: beatId }, beatId);
     await content.save();
+    await cleanupRemovedAssets(previousContent, content.toObject());
     return res.json(content.beats[index]);
   } catch (error) {
     return res.status(500).json({ message: 'Failed to update beat', error: error.message });
@@ -326,6 +491,7 @@ router.put('/beats/:id', authenticateToken, requireAdmin, async (req, res) => {
 router.delete('/beats/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const content = await getOrCreateContent();
+    const previousContent = content.toObject();
     const beatId = Number(req.params.id);
     const initialLength = content.beats.length;
     content.beats = content.beats.filter((beat) => Number(beat.id) !== beatId);
@@ -333,6 +499,7 @@ router.delete('/beats/:id', authenticateToken, requireAdmin, async (req, res) =>
       return res.status(404).json({ message: 'Beat not found' });
     }
     await content.save();
+    await cleanupRemovedAssets(previousContent, content.toObject());
     return res.json({ message: 'Beat deleted' });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to delete beat', error: error.message });
@@ -355,6 +522,7 @@ router.post('/videos', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/videos/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const content = await getOrCreateContent();
+    const previousContent = content.toObject();
     const videoId = Number(req.params.id);
     const index = content.videos.findIndex((video) => Number(video.id) === videoId);
     if (index === -1) {
@@ -364,6 +532,7 @@ router.put('/videos/:id', authenticateToken, requireAdmin, async (req, res) => {
     const current = content.videos[index].toObject();
     content.videos[index] = normalizeVideo({ ...current, ...(req.body || {}), id: videoId }, videoId);
     await content.save();
+    await cleanupRemovedAssets(previousContent, content.toObject());
     return res.json(content.videos[index]);
   } catch (error) {
     return res.status(500).json({ message: 'Failed to update video', error: error.message });
@@ -373,6 +542,7 @@ router.put('/videos/:id', authenticateToken, requireAdmin, async (req, res) => {
 router.delete('/videos/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const content = await getOrCreateContent();
+    const previousContent = content.toObject();
     const videoId = Number(req.params.id);
     const initialLength = content.videos.length;
     content.videos = content.videos.filter((video) => Number(video.id) !== videoId);
@@ -380,6 +550,7 @@ router.delete('/videos/:id', authenticateToken, requireAdmin, async (req, res) =
       return res.status(404).json({ message: 'Video not found' });
     }
     await content.save();
+    await cleanupRemovedAssets(previousContent, content.toObject());
     return res.json({ message: 'Video deleted' });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to delete video', error: error.message });
@@ -547,15 +718,53 @@ router.delete('/bookings', authenticateToken, requireAdmin, async (req, res) => 
 });
 
 router.post('/upload', authenticateToken, requireAdmin, upload.single('file'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
 
-  if (!isAllowedUploadForFolder(req.body?.folder, req.file)) {
-    return res.status(400).json({ error: 'Unsupported file type for selected media folder' });
-  }
+    if (!isAllowedUploadForFolder(req.body?.folder, req.file)) {
+      await removeLocalFileIfExists(req.file.path);
+      return res.status(400).json({ error: 'Unsupported file type for selected media folder' });
+    }
 
-  return res.json({ url: `/uploads/${req.file.filename}` });
+    if (isCloudinaryReady()) {
+      const uploadResult = await uploadImageFromPath(req.file.path, {
+        folder: getCloudinaryFolderForUpload(req.body?.folder),
+        resource_type: getCloudinaryResourceTypeForUpload(req.body?.folder),
+      });
+
+      await removeLocalFileIfExists(req.file.path);
+
+      return res.json({
+        url: uploadResult.secure_url,
+        meta: {
+          provider: 'cloudinary',
+          publicId: uploadResult.public_id,
+          resourceType: uploadResult.resource_type,
+          format: uploadResult.format,
+          bytes: uploadResult.bytes,
+        },
+      });
+    }
+
+    return res.json({
+      url: `/uploads/${req.file.filename}`,
+      meta: {
+        provider: 'local',
+        publicId: req.file.filename,
+        resourceType: getCloudinaryResourceTypeForUpload(req.body?.folder),
+        format: path.extname(req.file.filename).replace('.', ''),
+        bytes: req.file.size,
+      },
+    });
+  } catch (error) {
+    if (req.file?.path) {
+      await removeLocalFileIfExists(req.file.path);
+    }
+
+    return res.status(500).json({ error: 'Upload failed', message: error.message });
+  }
 });
 
 router.get('/me', authenticateToken, async (req, res) => {
