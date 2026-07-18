@@ -4006,6 +4006,13 @@ function closeProfilePageOverlay() {
     requestAnimationFrame(() => {
         syncProfileFocusLockState();
         syncScrollbars();
+        hardReleaseProfileScrollLockIfIdle();
+
+        // Some mobile browsers can keep stale overflow locks for a short tick after iframe teardown.
+        setTimeout(() => {
+            hardReleaseProfileScrollLockIfIdle();
+            syncScrollbars();
+        }, 90);
     });
 
     updateSiteMediaPlayerUI();
@@ -4029,6 +4036,38 @@ function syncProfileFocusLockState() {
 
     if (overlay) {
         overlay.classList.toggle('active', hasExpandedProfile);
+    }
+}
+
+function hardReleaseProfileScrollLockIfIdle() {
+    const pageOverlay = document.getElementById('profile-page-overlay');
+    const focusOverlay = document.getElementById('profile-focus-overlay');
+    const shell = document.querySelector('.profile-view-shell');
+    const profilesGrid = document.querySelector('#profiles-list .profiles-grid');
+    const hasExpandedProfile = !!document.querySelector('.profile.profile-expanded');
+    const isProdbyenneOverlayOpen = !!pageOverlay && pageOverlay.classList.contains('is-open');
+
+    if (hasExpandedProfile || isProdbyenneOverlayOpen) {
+        return;
+    }
+
+    document.body.classList.remove('profile-focus-active');
+    document.body.classList.remove('prodbyenne-overlay-open');
+    document.body.style.overflow = '';
+    document.body.style.overflowY = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.overflowY = '';
+
+    if (shell) {
+        shell.classList.remove('shell-expanded');
+    }
+
+    if (profilesGrid) {
+        profilesGrid.classList.remove('has-expanded-profile');
+    }
+
+    if (focusOverlay) {
+        focusOverlay.classList.remove('active');
     }
 }
 
