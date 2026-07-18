@@ -5,5 +5,9 @@
   "scripts": {
     "deploy:prodbyenne": "node ./scripts/deploy-prodbyenne.mjs",
     "deploy:prodbyenne:smoke": "node ./scripts/deploy-prodbyenne.mjs --open"
+  },
+  "dependencies": {
+    "react-router-dom": "^7.18.1",
+    "socket.io-client": "^4.8.3"
   }
 }
