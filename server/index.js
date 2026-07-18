@@ -14,20 +14,26 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000', // Make sure this matches your frontend's URL
+    origin: ['http://localhost:3000', 'http://localhost:5000'], // Allow the client served from either dev origin
     methods: ['GET', 'POST'],
   },
 });
 
 
 const diaryRoutes = require('./routes/diary');
-const userRoutes = require('./routes/userRoutes');
+const userRoutes = require('./routes/userRoutes')(io);
 const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes')(io);
 const profileRoutes = require('./routes/profileRoutes');
+const prodbyenneRoutes = require('./routes/prodbyenneRoutes')(io);
 
 const path = require('path');
 const clientPath = path.join(__dirname, '..', 'client');
+
+async function emitUsersSnapshot() {
+  const users = await User.find({}, 'username fullName profileImageUrl role isOnline');
+  io.emit('users_updated', users);
+}
 
 
 app.use(express.json());
@@ -59,6 +65,7 @@ app.use('/', userRoutes); // User-related routes, e.g., /login, /signup
 app.use('/messages', messageRoutes); // Message routes, e.g., /messages
 app.use('/friends', friendRoutes); // Friend-related routes, e.g., /friends/request
 app.use('/profiles', profileRoutes); // Profile routes, e.g., /profiles
+app.use('/prodbyenne', prodbyenneRoutes);
 
 
 
@@ -70,9 +77,13 @@ io.on('connection', (socket) => {
   socket.on('join_room', async (userId) => {
       if (userId) {
           // Store the socketId with the user in the database
-          await User.findByIdAndUpdate(userId, { socketId: socket.id, isOnline: true });
+          const user = await User.findByIdAndUpdate(userId, { socketId: socket.id, isOnline: true }, { new: true });
           socket.join(userId); // User joins their room
+          if (user && user.role === 'admin') {
+            socket.join('admins');
+          }
           console.log(`User ${userId} joined room ${userId}`);
+        await emitUsersSnapshot();
       }
   });
 
@@ -115,6 +126,7 @@ io.on('connection', (socket) => {
           if (user) {
               // Notify all connected clients that the user logged out
               io.emit('user_logged_out', { userId: user._id });
+              await emitUsersSnapshot();
               console.log(`User ${user.username} marked as offline`);
           }
       } catch (error) {

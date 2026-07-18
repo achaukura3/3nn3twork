@@ -1,24 +1,81 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const path = require('path');
+const crypto = require('crypto');
+const multer = require('multer');
 const User = require('../models/User');
 const authenticateToken = require('../middleware/auth');
 
+module.exports = (io) => {
 const router = express.Router();
+
+const uploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'uploads'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').slice(0, 10);
+    const unique = crypto.randomBytes(8).toString('hex');
+    cb(null, `user-avatar-${Date.now()}-${unique}${ext}`);
+  },
+});
+
+const upload = multer({ storage: uploadStorage });
+
+async function emitUsersSnapshot() {
+  if (!io) return;
+
+  const users = await User.find({}, 'username fullName profileImageUrl role isOnline');
+  io.emit('users_updated', users);
+}
 
 
  
 router.post('/signup', async (req, res) => {
   try {
-    const { username, password, role } = req.body;
+    const {
+      username,
+      password,
+      fullName,
+      dateOfBirth,
+      interest,
+      email,
+      contactNumber,
+    } = req.body;
+
+    if (!fullName || !dateOfBirth || !interest || !email || !contactNumber) {
+      return res.status(400).json({
+        message: 'Name, date of birth, interest, email, and contact number are required',
+      });
+    }
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(409).json({ message: 'Username already exists' });
     }
 
+    const allowedInterests = ['software', 'music', 'art', 'video-editing'];
+    if (interest && !allowedInterests.includes(interest)) {
+      return res.status(400).json({ message: 'Invalid interest value' });
+    }
+
+    const parsedDateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined;
+    if (dateOfBirth && Number.isNaN(parsedDateOfBirth.getTime())) {
+      return res.status(400).json({ message: 'Invalid date of birth' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword, role });
+    const newUser = new User({
+      username,
+      password: hashedPassword,
+      role: 'user',
+      fullName: fullName ? String(fullName).trim() : undefined,
+      dateOfBirth: parsedDateOfBirth,
+      interest: interest || undefined,
+      email: email ? String(email).trim().toLowerCase() : undefined,
+      contactNumber: contactNumber ? String(contactNumber).trim() : undefined,
+    });
     await newUser.save();
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
@@ -65,6 +122,17 @@ router.post('/login', async (req, res) => {
       const token = jwt.sign({ id: user._id, role: user.role }, 'secret_key');
       console.log('JWT token generated:', token);
 
+      if (io) {
+        io.emit('user_logged_in', {
+          userId: user._id,
+          username: user.username,
+          role: user.role,
+          isOnline: true,
+        });
+
+        await emitUsersSnapshot();
+      }
+
       res.json({ token });
     } catch (error) {
       console.error('Error during login:', error);
@@ -76,7 +144,13 @@ router.post('/login', async (req, res) => {
   
     try {
       // Update the user's isOnline status to false
-      await User.updateOne({ _id: userId }, { isOnline: false });
+      const user = await User.findByIdAndUpdate(userId, { isOnline: false }, { new: true });
+
+      if (io && user) {
+        io.emit('user_logged_out', { userId: user._id });
+        await emitUsersSnapshot();
+      }
+
       res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Error logging out', error: error.message });
@@ -84,11 +158,102 @@ router.post('/login', async (req, res) => {
   });
   router.get('/users', async (req, res) => {
     try {
-      const users = await User.find({}, 'username role isOnline'); // Fetch only required fields
+      const users = await User.find({}, 'username fullName profileImageUrl role isOnline');
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching users', error: error.message });
     }
   });
 
-  module.exports = router;
+  router.get('/me', authenticateToken, async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id).select(
+        'username role fullName dateOfBirth interest email contactNumber profileImageUrl'
+      );
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      return res.json(user);
+    } catch (error) {
+      return res.status(500).json({ message: 'Error fetching profile', error: error.message });
+    }
+  });
+
+  router.put('/me', authenticateToken, upload.single('profileImage'), async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const allowedInterests = ['software', 'music', 'art', 'video-editing'];
+      const nextInterest = req.body?.interest;
+      if (nextInterest && !allowedInterests.includes(nextInterest)) {
+        return res.status(400).json({ message: 'Invalid interest value' });
+      }
+
+      const nextDateOfBirth = req.body?.dateOfBirth ? new Date(req.body.dateOfBirth) : null;
+      if (req.body?.dateOfBirth && Number.isNaN(nextDateOfBirth.getTime())) {
+        return res.status(400).json({ message: 'Invalid date of birth' });
+      }
+
+      if (typeof req.body?.fullName === 'string') user.fullName = req.body.fullName.trim();
+      if (typeof req.body?.dateOfBirth === 'string') user.dateOfBirth = nextDateOfBirth;
+      if (typeof req.body?.interest === 'string') user.interest = nextInterest;
+      if (typeof req.body?.email === 'string') user.email = req.body.email.trim().toLowerCase();
+      if (typeof req.body?.contactNumber === 'string') user.contactNumber = req.body.contactNumber.trim();
+
+      if (req.file?.filename) {
+        user.profileImageUrl = `/uploads/${req.file.filename}`;
+      }
+
+      await user.save();
+
+      return res.json({
+        message: 'Profile updated',
+        user: {
+          _id: user._id,
+          username: user.username,
+          role: user.role,
+          fullName: user.fullName,
+          dateOfBirth: user.dateOfBirth,
+          interest: user.interest,
+          email: user.email,
+          contactNumber: user.contactNumber,
+          profileImageUrl: user.profileImageUrl || '',
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({ message: 'Error updating profile', error: error.message });
+    }
+  });
+
+  router.delete('/me', authenticateToken, async (req, res) => {
+    try {
+      const reason = String(req.body?.reason || '').trim();
+      if (!reason) {
+        return res.status(400).json({ message: 'A reason is required to delete this account' });
+      }
+
+      const deletedUser = await User.findByIdAndDelete(req.user.id);
+      if (!deletedUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      console.log(`Account deleted: userId=${req.user.id}; reason=${reason}`);
+
+      if (io) {
+        io.emit('user_logged_out', { userId: req.user.id });
+        await emitUsersSnapshot();
+      }
+
+      return res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+      return res.status(500).json({ message: 'Error deleting account', error: error.message });
+    }
+  });
+
+  return router;
+};

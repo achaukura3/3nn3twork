@@ -43,6 +43,22 @@
           <label for="textarea">Password</label>
           <input type="password" id="password" placeholder="Enter your password" required="" />
         </div>
+                <div class="password-toggle-row">
+                    <button
+                        id="login-password-toggle"
+                        class="password-eye-toggle"
+                        type="button"
+                        aria-pressed="false"
+                        aria-label="Toggle password visibility"
+                        onclick="togglePasswordButton('login-password-toggle', 'password', 'login-password-toggle-label')"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 5C6 5 2.1 9 1 12c1.1 3 5 7 11 7s9.9-4 11-7c-1.1-3-5-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"></path>
+                            <circle cx="12" cy="12" r="2.2"></circle>
+                        </svg>
+                    </button>
+                    <span id="login-password-toggle-label">View password</span>
+                </div>
         <button class="form-submit-btn"  onclick="login()">Login</button>
         <button class="form-submit-btn"  onclick="toggleSignupForm()">SignUp</button>
     
@@ -86,28 +102,70 @@
               <label for="textarea">Password</label>
               <input type="password" id="signup-password" placeholder="Enter your password" required="" />
             </div>
-            <div class="form-group">
-              <label for="textarea">Role</label>
-              <select id="signup-role">
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
+                        <div class="form-group">
+                            <label for="signup-confirm-password">Confirm Password</label>
+                            <input type="password" id="signup-confirm-password" placeholder="Confirm your password" required="" />
+                        </div>
+                        <div class="password-toggle-row">
+                            <button
+                                id="signup-password-toggle"
+                                class="password-eye-toggle"
+                                type="button"
+                                aria-pressed="false"
+                                aria-label="Toggle password visibility"
+                                onclick="togglePasswordButton('signup-password-toggle', 'signup-password,signup-confirm-password', 'signup-password-toggle-label')"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path d="M12 5C6 5 2.1 9 1 12c1.1 3 5 7 11 7s9.9-4 11-7c-1.1-3-5-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"></path>
+                                    <circle cx="12" cy="12" r="2.2"></circle>
+                                </svg>
+                            </button>
+                            <span id="signup-password-toggle-label">View passwords</span>
+                        </div>
+                    <div class="form-group">
+                        <label for="signup-full-name">Name</label>
+                        <input type="text" id="signup-full-name" placeholder="Enter your full name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-dob">Date of Birth</label>
+                        <input type="date" id="signup-dob" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-interest">Interest</label>
+                        <select id="signup-interest" required>
+                            <option value="" selected disabled>Select interest</option>
+                            <option value="software">Software</option>
+                            <option value="music">Music</option>
+                            <option value="art">Art</option>
+                            <option value="video-editing">Videos Editing</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" placeholder="Enter your email" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-contact-number">Contact Number</label>
+                        <input type="tel" id="signup-contact-number" placeholder="Enter your contact number" required />
+                    </div>
             <button class="form-submit-btn"  onclick="signup()">SignUp</button>
             <button class="form-submit-btn"  onclick="toggleSignupForm()">Login</button>
         
             </div>    
         
 
-        <!-- Dashboard -->
-        <div id="dashboard" style="display: none;">
-
-          <div class="profile-view-shell">
+                <!-- Dashboard -->
+                <div id="dashboard" style="display: none;">
+                    <div class="profile-view-shell">
             <div class="profile-filter-bar">
               <input id="profile-filter" class="profile-filter-input" type="text" placeholder="Filter profiles by name, type, or description" oninput="filterProfiles()" />
             </div>
-            <div class="profile-ring">
-              <div id="profiles-list" class="profiles-grid">
+    
+            <!-- Top scrollbar syncer -->
+            <div id="scrollbar-sync" class="scrollbar-sync"></div>
+    
+            <div id="profiles-list" class="profile-ring">
+              <div class="profiles-grid">
                 <!-- Profiles will be dynamically populated here -->
               </div>
             </div>
@@ -131,12 +189,55 @@
         <option value="personal">Personal</option>
         <option value="business">Business</option>
       </select>
+            <input type="text" id="profile-page-url" placeholder="Embedded Page URL (e.g. /profiles/prodbyenne/index.html)" />
       <input type="file" id="profile-picture" />
+        </div>
     </div>
     <div class="modal-footer">
       <button onclick="addProfile()">Add Profile</button>
     </div>
   </div>
+</div>
+
+
+<div id="update-profile-modal" class="modal" style="display: none;">
+    <div class="modal-content update-profile-modal-content">
+        <span class="modal-header update-profile-modal-header">
+            <h2>Update Profile Info</h2>
+            <button type="button" id="close-update-profile-modal" class="update-profile-close" onclick="closeUpdateProfileModal()">X</button>
+        </span>
+        <div class="modal-body update-profile-modal-body">
+            <input type="hidden" id="update-profile-id" />
+
+            <label class="update-profile-field">
+                <span>Profile Name</span>
+                <input type="text" id="update-profile-name" placeholder="Profile Name" />
+            </label>
+
+            <label class="update-profile-field">
+                <span>Type</span>
+                <select id="update-profile-type">
+                    <option value="personal">Personal</option>
+                    <option value="business">Business</option>
+                    <option value="artist">Artist</option>
+                </select>
+            </label>
+
+            <label class="update-profile-field update-profile-field-full">
+                <span>Description</span>
+                <textarea id="update-profile-description" placeholder="Profile Description"></textarea>
+            </label>
+
+            <label class="update-profile-field update-profile-field-full">
+                <span>Embedded Page URL</span>
+                <input type="text" id="update-profile-page-url" placeholder="Embedded Page URL (optional)" />
+            </label>
+        </div>
+        <div class="modal-footer update-profile-modal-footer">
+            <button type="button" class="update-profile-save" onclick="submitProfileAdminUpdate()">Save Changes</button>
+            <button type="button" class="update-profile-cancel" onclick="closeUpdateProfileModal()">Cancel</button>
+        </div>
+    </div>
 </div>
 
 
@@ -158,8 +259,15 @@
                    Posts will be dynamically rendered here 
               </div>
           </div> -->
-          <button id="add-profile-button" class="buttons" onclick="openAddProfileModal()">➕</button>
-          <button id="logout-button" class="buttons" onclick="logout()">
+                    <div id="floating-tools" class="floating-tools">
+                        <div id="floating-tools-handle" class="floating-tools-handle">
+                                <span class="floating-tools-title">menu</span>
+                                <button id="floating-tools-toggle" class="floating-tools-toggle" type="button" onclick="toggleFloatingToolsCollapsed()" aria-label="Collapse quick tools">−</button>
+                        </div>
+                        <div id="floating-tools-items" class="floating-tools-items">
+                    <button id="profile-settings-button" class="buttons" onclick="toggleProfileSidebar()" data-tooltip="Profile" aria-label="Open profile settings">👤</button>
+                    <button id="add-profile-button" class="buttons" onclick="openAddProfileModal()" data-tooltip="Add Profile" aria-label="Add a new profile">➕</button>
+                    <button id="logout-button" class="buttons" onclick="logout()" data-tooltip="Log Out" aria-label="Log out">
             <div class="sign"><svg viewBox="0 0 512 512"><path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"></path></svg></div>    
             <div class="text">Logout</div>
         </button>
@@ -167,7 +275,7 @@
             
 
 
-          <button id="chats-button" class="buttons" onclick= "toggleChatModal()">
+          <button id="chats-button" class="buttons" onclick= "toggleChatModal()" data-tooltip="Users" aria-label="Open users list">
             <div tabindex="0" class="burger">
                 <svg
                   viewBox="0 0 24 24"
@@ -178,49 +286,206 @@
                 d="M12 2c2.757 0 5 2.243 5 5.001 0 2.756-2.243 5-5 5s-5-2.244-5-5c0-2.758 2.243-5.001 5-5.001zm0-2c-3.866 0-7 3.134-7 7.001 0 3.865 3.134 7 7 7s7-3.135 7-7c0-3.867-3.134-7.001-7-7.001zm6.369 13.353c-.497.498-1.057.931-1.658 1.302 2.872 1.874 4.378 5.083 4.972 7.346h-19.387c.572-2.29 2.058-5.503 4.973-7.358-.603-.374-1.162-.811-1.658-1.312-4.258 3.072-5.611 8.506-5.611 10.669h24c0-2.142-1.44-7.557-5.631-10.647z"
               ></path></svg></div>
                 <div class="text">Users</div>
-                <!-- <span id="chat-notification">0</span> -->
+                                <span id="users-online-notification" class="button-notification hidden">0</span>
         </button>
-        <button id="chat-toggle-button" class="buttons" onclick="toggleChat()">💬</button>
+                <button id="chat-toggle-button" class="buttons" onclick="toggleChat()" data-tooltip="Chat" aria-label="Open chat panel">
+                        💬
+                        <span id="messages-notification" class="button-notification hidden">0</span>
+                </button>
+        <button id="bookings-button" class="buttons" onclick="openBookingsModal()" data-tooltip="Bookings" aria-label="Open bookings">
+            📅
+            <span id="bookings-notification" class="bookings-notification hidden">0</span>
+        </button>
+                </div>
+              </div>
+
+        <aside id="profile-sidebar" class="profile-sidebar" style="display: none;">
+            <div class="profile-sidebar-header">
+                <h3>My Profile</h3>
+                <div class="profile-sidebar-actions">
+                    <button class="profile-sidebar-minimize" onclick="toggleProfileSidebarMinimize()" aria-label="Minimize profile settings">—</button>
+                    <button class="profile-sidebar-close" onclick="closeProfileSidebar()" aria-label="Close profile settings">✖</button>
+                </div>
+            </div>
+            <div class="profile-sidebar-body">
+                <div id="profile-sidebar-summary" class="profile-sidebar-summary">
+                    <div class="profile-sidebar-summary-top">
+                        <img id="profile-summary-avatar" class="profile-summary-avatar hidden" alt="Profile avatar" />
+                        <div>
+                            <p id="profile-summary-name" class="profile-summary-name">My Profile</p>
+                            <p id="profile-summary-email" class="profile-summary-email"></p>
+                        </div>
+                    </div>
+                    <button class="profile-sidebar-view" onclick="openProfileSidebarViewMode()">👁️ View Profile</button>
+                    <button class="profile-sidebar-edit" onclick="openProfileSidebarEditMode()">✏️ Edit Profile</button>
+                    <button class="profile-sidebar-delete-trigger" onclick="openProfileSidebarDeleteMode()">🗑️ Delete Account</button>
+                </div>
+
+                <div id="profile-sidebar-view-panel" class="profile-sidebar-view-panel hidden">
+                    <img id="profile-view-image" class="profile-view-image hidden" alt="Expanded profile view" />
+                    <div class="profile-view-fallback">No profile picture uploaded yet.</div>
+                    <div class="profile-view-meta">
+                        <p><strong>Name:</strong> <span id="profile-view-name"></span></p>
+                        <p><strong>Username:</strong> <span id="profile-view-username"></span></p>
+                        <p><strong>Email:</strong> <span id="profile-view-email"></span></p>
+                        <p><strong>Contact:</strong> <span id="profile-view-contact"></span></p>
+                        <p><strong>Interest:</strong> <span id="profile-view-interest"></span></p>
+                    </div>
+                    <button class="profile-sidebar-cancel" onclick="closeProfileSidebarViewMode()">Back</button>
+                </div>
+
+                <div id="profile-sidebar-edit-fields" class="profile-sidebar-edit-fields hidden">
+                    <div class="form-group">
+                    <label for="profile-settings-username">Username</label>
+                    <input id="profile-settings-username" type="text" disabled />
+                </div>
+                <div class="form-group">
+                    <label for="profile-settings-full-name">Full Name</label>
+                    <input id="profile-settings-full-name" type="text" placeholder="Enter your name" />
+                </div>
+                <div class="form-group">
+                    <label for="profile-settings-dob">Date of Birth</label>
+                    <input id="profile-settings-dob" type="date" />
+                </div>
+                <div class="form-group">
+                    <label for="profile-settings-interest">Interest</label>
+                    <select id="profile-settings-interest">
+                        <option value="">Select interest</option>
+                        <option value="software">Software</option>
+                        <option value="music">Music</option>
+                        <option value="art">Art</option>
+                        <option value="video-editing">Videos Editing</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="profile-settings-email">Email</label>
+                    <input id="profile-settings-email" type="email" placeholder="Enter your email" />
+                </div>
+                <div class="form-group">
+                    <label for="profile-settings-contact-number">Contact Number</label>
+                    <input id="profile-settings-contact-number" type="tel" placeholder="Enter your contact number" />
+                </div>
+                <div class="form-group">
+                    <label for="profile-settings-image">Profile Picture (Optional)</label>
+                    <input id="profile-settings-image" type="file" accept="image/*" />
+                </div>
+                <div class="profile-sidebar-edit-actions">
+                    <button class="profile-sidebar-save" onclick="saveMyProfile()">Save Changes</button>
+                    <button class="profile-sidebar-cancel" onclick="closeProfileSidebarEditMode()">Cancel</button>
+                </div>
+                </div>
+
+                <div id="profile-sidebar-danger" class="profile-sidebar-danger hidden" aria-hidden="true">
+                    <h4>Delete Account</h4>
+                    <p>This action cannot be undone. Please tell us why you want to delete your account.</p>
+                    <textarea id="delete-account-reason" placeholder="Reason for deleting your account" required></textarea>
+                    <button class="profile-sidebar-cancel" onclick="closeProfileSidebarDeleteMode()">Cancel</button>
+                    <button class="profile-sidebar-delete" onclick="deleteMyAccount()">Delete My Account</button>
+                </div>
+            </div>
+        </aside>
+
+        <div id="profile-sidebar-backdrop" class="profile-sidebar-backdrop" style="display: none;" onclick="closeProfileSidebar()"></div>
+
+        <button id="user-avatar-chip" class="user-avatar-chip hidden"  aria-label="Open profile picture preview">
+            <img id="user-avatar-image" class="user-avatar-image" alt="Profile avatar" />
+        </button>
+
+        <div id="user-avatar-preview" class="user-avatar-preview" style="display: none;">
+            <div class="user-avatar-preview-card">
+                <button class="user-avatar-preview-close" onclick="closeUserAvatarPreview()" aria-label="Close avatar preview">✖</button>
+                <img id="user-avatar-preview-image" class="user-avatar-preview-image" alt="Expanded profile avatar" />
+                <p id="user-avatar-preview-name" class="user-avatar-preview-name"></p>
+            </div>
+        </div>
+
+        <div id="bookings-modal" class="bookings-modal" style="display: none;">
+            <div class="bookings-modal-content">
+                <div class="bookings-modal-header">
+                    <h3>Bookings</h3>
+                    <button class="bookings-close" onclick="closeBookingsModal()" aria-label="Close bookings modal">✖</button>
+                </div>
+                <div class="bookings-filters">
+                    <input id="bookings-filter-who" type="text" placeholder="Filter by who" oninput="renderBookingsList()" />
+                    <select id="bookings-filter-service" onchange="renderBookingsList()">
+                        <option value="">All services</option>
+                    </select>
+                    <select id="bookings-sort" onchange="renderBookingsList()">
+                        <option value="session-desc">Session date/time (latest)</option>
+                        <option value="session-asc">Session date/time (earliest)</option>
+                        <option value="who-asc">Who (A-Z)</option>
+                        <option value="who-desc">Who (Z-A)</option>
+                        <option value="service-asc">Service (A-Z)</option>
+                        <option value="service-desc">Service (Z-A)</option>
+                    </select>
+                </div>
+                <div id="bookings-list" class="bookings-list"></div>
+            </div>
+        </div>
+
           <!-- Users Modal -->
           <div id="chat-modal" style="display: none;">
-            <div class="modal-header user-modal-header">
-                
-                <button id="minimise-users" class="window-control-button window-control-icon" onclick="minimiseUsers()" aria-label="Minimize users"> 
-                    <span class="window-icon window-icon-minimize"></span>
-                </button>
+            <div class="window-controls">
+            
                 <button id="close-users" class="window-control-button window-control-icon" onclick="closeUsers()" aria-label="Close users">
                     <span class="window-icon window-icon-close"></span>
                 </button>
             </div>
-            <h3>Chat with</h3>
+            <h3>Users</h3>
             <div id="users-list"></div>
-        </div> 
-          
-      </div>
+        </div>
+
       <div id="chat" class="hidden" style="display: none;">
         <div id="chat-modal-container">
             <div class="modal-header retro-window-header">
                 <div class="window-left" onclick="minimiseChat()">
                     <span class="window-label">CHAT</span>
-                    <span class="window-title">Chat with <strong id="chat-username">No user selected</strong></span>
-                    <span id="chat-collapse-summary" class="chat-collapse-summary hidden">Chat with <span id="chat-collapse-username">No user selected</span> — click to expand</span>
+                    <span class="window-title chat-user-title"><img id="chat-user-avatar" class="chat-user-avatar hidden" alt="Chat user avatar" role="button" tabindex="0" aria-label="Open selected user profile" onclick="openSelectedChatUserProfile(event)" onkeydown="handleChatUserProfileTriggerKeydown(event)" /><strong id="chat-username" role="button" tabindex="0" aria-label="Open selected user profile" onclick="openSelectedChatUserProfile(event)" onkeydown="handleChatUserProfileTriggerKeydown(event)">No user selected</strong></span>
+                    <span id="chat-collapse-summary" class="chat-collapse-summary hidden"><span id="chat-collapse-username">No user selected</span> — click to expand</span>
                 </div>
                 <div class="window-controls">
-                    <button id="minimise-chat" class="window-control-button window-control-icon" onclick="minimiseChat()" aria-label="Minimize chat">
+                    <button id="collapse-chat" class="window-control-button window-control-icon" onclick="minimiseChat()" aria-label="Collapse chat">
                         <span class="window-icon window-icon-minimize"></span>
                     </button>
-                    <button id="close-modal" class="window-control-button window-control-icon" onclick="closeChatModal()" aria-label="Close chat">
-                        <span class="window-icon window-icon-close"></span>
-                    </button>
+
+          
                 </div>
             </div>
             <div id="chat-messages-container" class="chat-messages-box chat-collapse-transition">
                 <!-- Messages will dynamically appear here -->
             </div>
-            <textarea id="chat-input" class="chat-input-box chat-collapse-transition" placeholder="Type your message"></textarea>
+            <div class="chat-compose-row chat-collapse-transition">
+                <button id="chat-emoji-toggle" class="chat-emoji-toggle" type="button" aria-label="Open emoji picker">😊</button>
+                <button id="chat-attach-toggle" class="chat-attach-toggle" type="button" aria-label="Attach media">📎</button>
+                <input id="chat-media-input" type="file" accept="image/*,video/*,audio/*" class="chat-media-input" />
+                <textarea id="chat-input" class="chat-input-box" placeholder="Type your message"></textarea>
+            </div>
+            <div id="chat-emoji-picker" class="chat-emoji-picker chat-collapse-transition" aria-label="Emoji picker"></div>
+            <div id="chat-media-selected" class="chat-media-selected chat-collapse-transition hidden"></div>
             <button id="send-message" class="send-button chat-collapse-transition" onclick="sendChatMessage()">Send</button>
         </div>
     </div>
+
+        <div id="chat-user-profile-modal" class="modal" style="display: none;">
+            <div class="modal-content chat-user-profile-modal-content">
+                <span class="modal-header chat-user-profile-header">
+                    <h2>Chat Profile</h2>
+                    <button type="button" class="chat-user-profile-close" onclick="closeChatUserProfileModal()" aria-label="Close chat profile">X</button>
+                </span>
+                <div class="chat-user-profile-body">
+                    <img id="chat-user-profile-image" class="chat-user-profile-image hidden" alt="Selected user profile image" />
+                    <div id="chat-user-profile-fallback" class="chat-user-profile-fallback">No profile picture uploaded.</div>
+                    <div class="chat-user-profile-meta">
+                        <p><strong>Name:</strong> <span id="chat-user-profile-name"></span></p>
+                        <p><strong>Username:</strong> <span id="chat-user-profile-username"></span></p>
+                        <p><strong>Email:</strong> <span id="chat-user-profile-email"></span></p>
+                        <p><strong>Contact:</strong> <span id="chat-user-profile-contact"></span></p>
+                        <p><strong>Interest:</strong> <span id="chat-user-profile-interest"></span></p>
+                        <p><strong>Status:</strong> <span id="chat-user-profile-status"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
     
        
 
@@ -228,9 +493,1972 @@
     
   <script>
   let token = null;
+    let currentUserRole = null;
   let selectedUser = null; // Ensure this is defined first
   let currentProfiles = [];
+    let currentUsers = [];
+    let currentBookings = [];
+        let currentUserProfile = null;
+                let pendingChatMediaFile = null;
+    let pendingBookingNotifications = 0;
+        let unreadMessageByUser = {};
+        let unreadMessageTotal = 0;
+        let onlineUsersCount = 0;
+    const bookingToastTimeoutMs = 5200;
+    const bookingToastExitMs = 250;
+        const CHAT_EMOJIS = ['😀', '😂', '😍', '😎', '🔥', '🎵', '💯', '🙌', '🙏', '❤️', '✨', '🚀', '🎧', '🎬', '👏', '🤝'];
   const socket = io('http://localhost:5000'); // Ensure Socket.IO is initialized correctly
+
+    const siteMediaState = {
+        playlist: [],
+        currentIndex: -1,
+        isPlaying: false,
+        fadeIntervalId: null,
+        fadingTrackUrl: '',
+        autoStartPending: true,
+        gestureUnlockArmed: false,
+        loginGestureBound: false,
+        didAttemptApiPlaylistPreload: false,
+    };
+    const SITE_MEDIA_POSITION_KEY = 'siteMediaPlayerPosition';
+    const THEME_STORAGE_KEY = 'siteThemeMode';
+    let themeTransitionTimeoutId = null;
+    let loginMusicOverlayDismissed = false;
+    const SITE_MEDIA_DEFAULT_VOLUME = 1;
+    const SITE_MEDIA_FADE_OUT_MS = 1400;
+    const SITE_MEDIA_FADE_TICK_MS = 50;
+
+    function applyThemeMode(isLightMode) {
+        document.body.classList.toggle('theme-light', !!isLightMode);
+        document.body.classList.toggle('theme-dark', !isLightMode);
+    }
+
+    function initializeThemeToggle() {
+        const themeToggle = document.getElementById('theme');
+        if (!themeToggle) return;
+
+        const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        const isLightMode = storedTheme ? storedTheme === 'light' : prefersLight;
+
+        themeToggle.checked = isLightMode;
+        applyThemeMode(isLightMode);
+
+        themeToggle.addEventListener('change', () => {
+            const nextLightMode = !!themeToggle.checked;
+
+            document.body.classList.add('theme-switching');
+            applyThemeMode(nextLightMode);
+
+            if (themeTransitionTimeoutId) {
+                clearTimeout(themeTransitionTimeoutId);
+            }
+
+            themeTransitionTimeoutId = window.setTimeout(() => {
+                document.body.classList.remove('theme-switching');
+                themeTransitionTimeoutId = null;
+            }, 360);
+
+            localStorage.setItem(THEME_STORAGE_KEY, nextLightMode ? 'light' : 'dark');
+        });
+    }
+
+    function normalizeProdbyenneTrack(track) {
+        if (!track || typeof track !== 'object') return null;
+
+        const id = String(track.id || '').trim();
+        const title = String(track.title || 'Untitled track').trim();
+        const genre = String(track.genre || '').trim();
+        const audioUrl = String(track.audioUrl || '').trim();
+
+        if (!audioUrl) return null;
+
+        return {
+            id,
+            title: title || 'Untitled track',
+            genre,
+            audioUrl,
+        };
+    }
+
+    async function preloadSiteMediaPlaylistFromApi() {
+        if (siteMediaState.didAttemptApiPlaylistPreload) return;
+        siteMediaState.didAttemptApiPlaylistPreload = true;
+
+        try {
+            const response = await fetch('/prodbyenne/content', { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`Failed to load ProdbyENNE content (${response.status})`);
+            }
+
+            const payload = await response.json();
+            const beats = Array.isArray(payload?.beats) ? payload.beats : [];
+
+            if (!beats.length) return;
+            setSiteMediaPlaylist(beats);
+        } catch (error) {
+            console.warn('Unable to preload ProdbyENNE playlist from API:', error);
+        }
+    }
+
+    function ensureSiteMediaPlayer() {
+        let player = document.getElementById('site-media-player');
+        if (player) return player;
+
+        player = document.createElement('div');
+        player.id = 'site-media-player';
+        player.className = 'site-media-player';
+        player.innerHTML = `
+            <button type="button" class="site-media-drag-handle" id="site-media-drag-handle" aria-label="Drag player" title="Drag player">⋮⋮</button>
+            <div class="site-media-meta">
+                <div id="site-media-title" class="site-media-title">No track playing</div>
+                <div id="site-media-subtitle" class="site-media-subtitle">Open ProdbyENNE and choose a song.</div>
+            </div>
+            <div class="site-media-controls">
+                <button type="button" id="site-media-prev" class="site-media-btn" aria-label="Previous song">⏮</button>
+                <button type="button" id="site-media-toggle" class="site-media-btn" aria-label="Play or pause">▶</button>
+                <button type="button" id="site-media-next" class="site-media-btn" aria-label="Next song">⏭</button>
+                <button type="button" id="site-media-stop" class="site-media-btn site-media-btn-stop" aria-label="Stop song">⏹</button>
+            </div>
+            <audio id="site-media-audio" preload="metadata"></audio>
+        `;
+
+        document.body.appendChild(player);
+        document.body.classList.add('site-media-player-enabled');
+
+        const audio = player.querySelector('#site-media-audio');
+        const prevBtn = player.querySelector('#site-media-prev');
+        const toggleBtn = player.querySelector('#site-media-toggle');
+        const nextBtn = player.querySelector('#site-media-next');
+        const stopBtn = player.querySelector('#site-media-stop');
+
+        if (prevBtn) prevBtn.addEventListener('click', playPreviousSiteTrack);
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleSiteMediaPlayback);
+        if (nextBtn) nextBtn.addEventListener('click', playNextSiteTrack);
+        if (stopBtn) stopBtn.addEventListener('click', stopSiteMediaPlayback);
+
+        if (audio) {
+            audio.addEventListener('play', () => {
+                siteMediaState.isPlaying = true;
+                loginMusicOverlayDismissed = true;
+                if (audio.volume < SITE_MEDIA_DEFAULT_VOLUME && !siteMediaState.fadingTrackUrl) {
+                    audio.volume = SITE_MEDIA_DEFAULT_VOLUME;
+                }
+                updateSiteMediaPlayerUI();
+            });
+            audio.addEventListener('pause', () => {
+                siteMediaState.isPlaying = false;
+                updateSiteMediaPlayerUI();
+            });
+            audio.addEventListener('timeupdate', () => {
+                maybeTriggerSiteMediaFadeOut(audio);
+            });
+            audio.addEventListener('ended', () => {
+                resetSiteMediaFadeState(audio, true);
+                playNextSiteTrack();
+            });
+        }
+
+        enableSiteMediaPlayerDrag(player);
+        restoreSiteMediaPlayerPosition(player);
+
+        return player;
+    }
+
+    function saveSiteMediaPlayerPosition(position) {
+        try {
+            localStorage.setItem(SITE_MEDIA_POSITION_KEY, JSON.stringify(position));
+        } catch (error) {
+            console.warn('Unable to persist media player position:', error);
+        }
+    }
+
+    function restoreSiteMediaPlayerPosition(player) {
+        if (!player) return;
+
+        try {
+            const raw = localStorage.getItem(SITE_MEDIA_POSITION_KEY);
+            if (!raw) return;
+
+            const parsed = JSON.parse(raw);
+            const left = Number(parsed?.left);
+            const top = Number(parsed?.top);
+
+            if (!Number.isFinite(left) || !Number.isFinite(top)) return;
+
+            player.style.left = `${left}px`;
+            player.style.top = `${top}px`;
+            player.style.right = 'auto';
+            player.style.bottom = 'auto';
+            player.style.transform = 'none';
+        } catch (error) {
+            console.warn('Unable to restore media player position:', error);
+        }
+    }
+
+    function enableSiteMediaPlayerDrag(player) {
+        if (!player || player.dataset.dragBound === '1') return;
+
+        const dragHandle = player.querySelector('#site-media-drag-handle');
+        if (!dragHandle) return;
+
+        let isDragging = false;
+        let pointerOffsetX = 0;
+        let pointerOffsetY = 0;
+
+        const onPointerMove = (event) => {
+            if (!isDragging) return;
+
+            const playerWidth = player.offsetWidth;
+            const playerHeight = player.offsetHeight;
+            const minX = 8;
+            const minY = 8;
+            const maxX = Math.max(minX, window.innerWidth - playerWidth - 8);
+            const maxY = Math.max(minY, window.innerHeight - playerHeight - 8);
+
+            const nextLeft = Math.min(Math.max(event.clientX - pointerOffsetX, minX), maxX);
+            const nextTop = Math.min(Math.max(event.clientY - pointerOffsetY, minY), maxY);
+
+            player.style.left = `${nextLeft}px`;
+            player.style.top = `${nextTop}px`;
+            player.style.right = 'auto';
+            player.style.bottom = 'auto';
+            player.style.transform = 'none';
+        };
+
+        const onPointerUp = () => {
+            if (!isDragging) return;
+
+            isDragging = false;
+            player.classList.remove('is-dragging');
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+
+            const rect = player.getBoundingClientRect();
+            saveSiteMediaPlayerPosition({ left: rect.left, top: rect.top });
+        };
+
+        dragHandle.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0) return;
+
+            const rect = player.getBoundingClientRect();
+            pointerOffsetX = event.clientX - rect.left;
+            pointerOffsetY = event.clientY - rect.top;
+            isDragging = true;
+            player.classList.add('is-dragging');
+
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+        });
+
+        player.dataset.dragBound = '1';
+    }
+
+    function getSiteMediaAudioElement() {
+        return ensureSiteMediaPlayer().querySelector('#site-media-audio');
+    }
+
+    function ensureLoginMusicStartOverlay() {
+        let overlay = document.getElementById('login-music-start-overlay');
+        if (overlay) return overlay;
+
+        overlay = document.createElement('div');
+        overlay.id = 'login-music-start-overlay';
+        overlay.className = 'login-music-start-overlay';
+        overlay.innerHTML = `
+            <span class="login-music-start-overlay-title">Tap anywhere to start music</span>
+            <span class="login-music-start-overlay-subtitle">Sound will continue while you browse.</span>
+        `;
+
+        document.body.appendChild(overlay);
+        return overlay;
+    }
+
+    async function attemptStartSiteMediaPlaybackFromGesture() {
+        await preloadSiteMediaPlaylistFromApi();
+
+        if (!siteMediaState.playlist.length) {
+            return false;
+        }
+
+        const audio = getSiteMediaAudioElement();
+        if (!audio) return false;
+
+        if (siteMediaState.currentIndex < 0 || siteMediaState.currentIndex >= siteMediaState.playlist.length) {
+            const firstTrack = siteMediaState.playlist[0];
+            if (!firstTrack?.audioUrl) return false;
+
+            resetSiteMediaFadeState(audio, true);
+            if (audio.src !== firstTrack.audioUrl) {
+                audio.src = firstTrack.audioUrl;
+            }
+
+            audio.volume = SITE_MEDIA_DEFAULT_VOLUME;
+            siteMediaState.currentIndex = 0;
+            siteMediaState.autoStartPending = false;
+        }
+
+        try {
+            await audio.play();
+            updateSiteMediaPlayerUI();
+            return true;
+        } catch (error) {
+            console.warn('Unable to start audio playback from login gesture:', error);
+            updateSiteMediaPlayerUI();
+            return false;
+        }
+    }
+
+    function updateLoginMusicStartOverlayVisibility() {
+        const overlay = ensureLoginMusicStartOverlay();
+        const isAuthView = document.body.classList.contains('auth-view');
+
+        const shouldShow = isAuthView
+            && !siteMediaState.isPlaying
+            && !loginMusicOverlayDismissed;
+
+        overlay.classList.toggle('is-visible', shouldShow);
+    }
+
+    async function handleLoginMusicStartGesture() {
+        if (!document.body.classList.contains('auth-view')) return;
+        if (loginMusicOverlayDismissed) return;
+
+        loginMusicOverlayDismissed = true;
+        updateLoginMusicStartOverlayVisibility();
+
+        const started = await attemptStartSiteMediaPlaybackFromGesture();
+        if (!started) {
+            loginMusicOverlayDismissed = false;
+        }
+
+        updateLoginMusicStartOverlayVisibility();
+    }
+
+    function bindLoginMusicStartGesture() {
+        if (siteMediaState.loginGestureBound) return;
+        siteMediaState.loginGestureBound = true;
+
+        ['pointerdown', 'touchstart', 'keydown'].forEach((eventName) => {
+            document.addEventListener(eventName, handleLoginMusicStartGesture, true);
+        });
+    }
+
+    function armSiteMediaGestureUnlock() {
+        bindLoginMusicStartGesture();
+        if (siteMediaState.gestureUnlockArmed) return;
+        siteMediaState.gestureUnlockArmed = true;
+
+        const unlock = () => {
+            const audio = getSiteMediaAudioElement();
+            const hasCurrent = siteMediaState.currentIndex >= 0
+                && siteMediaState.currentIndex < siteMediaState.playlist.length;
+
+            if (!audio || !hasCurrent || !audio.paused) {
+                disarm();
+                return;
+            }
+
+            audio.play().catch((error) => {
+                console.warn('Unable to resume audio playback after user interaction:', error);
+            }).finally(() => {
+                disarm();
+            });
+        };
+
+        const disarm = () => {
+            if (!siteMediaState.gestureUnlockArmed) return;
+            siteMediaState.gestureUnlockArmed = false;
+            ['pointerdown', 'keydown', 'touchstart'].forEach((eventName) => {
+                document.removeEventListener(eventName, unlock, true);
+            });
+        };
+
+        ['pointerdown', 'keydown', 'touchstart'].forEach((eventName) => {
+            document.addEventListener(eventName, unlock, true);
+        });
+    }
+
+    function ensureProdbyennePlaylistPreload() {
+        if (document.getElementById('prodbyenne-preload-iframe')) return;
+
+        const preloadFrame = document.createElement('iframe');
+        preloadFrame.id = 'prodbyenne-preload-iframe';
+        preloadFrame.src = '/profiles/prodbyenne/index.html';
+        preloadFrame.title = 'ProdbyENNE preload bridge';
+        preloadFrame.tabIndex = -1;
+        preloadFrame.setAttribute('aria-hidden', 'true');
+        preloadFrame.style.position = 'fixed';
+        preloadFrame.style.width = '0';
+        preloadFrame.style.height = '0';
+        preloadFrame.style.opacity = '0';
+        preloadFrame.style.pointerEvents = 'none';
+        preloadFrame.style.border = '0';
+        preloadFrame.style.left = '-9999px';
+        preloadFrame.style.top = '-9999px';
+
+        document.body.appendChild(preloadFrame);
+    }
+
+    function clearSiteMediaFadeInterval() {
+        if (!siteMediaState.fadeIntervalId) return;
+        clearInterval(siteMediaState.fadeIntervalId);
+        siteMediaState.fadeIntervalId = null;
+    }
+
+    function resetSiteMediaFadeState(audio, restoreVolume = true) {
+        clearSiteMediaFadeInterval();
+        siteMediaState.fadingTrackUrl = '';
+
+        if (audio && restoreVolume) {
+            audio.volume = SITE_MEDIA_DEFAULT_VOLUME;
+        }
+    }
+
+    function startSiteMediaFadeOut(audio) {
+        if (!audio) return;
+
+        const activeSrc = String(audio.currentSrc || audio.src || '').trim();
+        if (!activeSrc) return;
+        if (siteMediaState.fadingTrackUrl === activeSrc) return;
+
+        resetSiteMediaFadeState(audio, false);
+        siteMediaState.fadingTrackUrl = activeSrc;
+
+        const steps = Math.max(1, Math.floor(SITE_MEDIA_FADE_OUT_MS / SITE_MEDIA_FADE_TICK_MS));
+        const volumeDropPerTick = SITE_MEDIA_DEFAULT_VOLUME / steps;
+
+        siteMediaState.fadeIntervalId = setInterval(() => {
+            const nextVolume = Math.max(0, audio.volume - volumeDropPerTick);
+            audio.volume = nextVolume;
+
+            if (nextVolume <= 0.01) {
+                clearSiteMediaFadeInterval();
+            }
+        }, SITE_MEDIA_FADE_TICK_MS);
+    }
+
+    function maybeTriggerSiteMediaFadeOut(audio) {
+        if (!audio || audio.paused) return;
+        if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+
+        const remainingMs = Math.max(0, (audio.duration - audio.currentTime) * 1000);
+        if (remainingMs <= SITE_MEDIA_FADE_OUT_MS) {
+            startSiteMediaFadeOut(audio);
+        }
+    }
+
+    function updateSiteMediaPlayerUI() {
+        const player = ensureSiteMediaPlayer();
+        const title = player.querySelector('#site-media-title');
+        const subtitle = player.querySelector('#site-media-subtitle');
+        const toggleBtn = player.querySelector('#site-media-toggle');
+        const prevBtn = player.querySelector('#site-media-prev');
+        const nextBtn = player.querySelector('#site-media-next');
+        const stopBtn = player.querySelector('#site-media-stop');
+
+        const hasTracks = siteMediaState.playlist.length > 0;
+        const hasCurrent = siteMediaState.currentIndex >= 0 && siteMediaState.currentIndex < siteMediaState.playlist.length;
+        const currentTrack = hasCurrent ? siteMediaState.playlist[siteMediaState.currentIndex] : null;
+
+        if (title) {
+            title.textContent = currentTrack ? currentTrack.title : 'No track playing';
+        }
+
+        if (subtitle) {
+            subtitle.textContent = currentTrack
+                ? (currentTrack.genre || 'ProdbyENNE')
+                : 'Open ProdbyENNE and choose a song.';
+        }
+
+        if (toggleBtn) {
+            toggleBtn.textContent = siteMediaState.isPlaying ? '⏸' : '▶';
+            toggleBtn.disabled = !hasCurrent;
+        }
+
+        if (prevBtn) prevBtn.disabled = !hasTracks;
+        if (nextBtn) nextBtn.disabled = !hasTracks;
+        if (stopBtn) stopBtn.disabled = !hasCurrent;
+
+        player.classList.toggle('is-active', hasCurrent);
+        updateLoginMusicStartOverlayVisibility();
+    }
+
+    function setSiteMediaPlaylist(playlist) {
+        const nextPlaylist = Array.isArray(playlist)
+            ? playlist.map(normalizeProdbyenneTrack).filter(Boolean)
+            : [];
+
+        siteMediaState.playlist = nextPlaylist;
+
+        if (!nextPlaylist.length) {
+            siteMediaState.currentIndex = -1;
+            siteMediaState.isPlaying = false;
+            siteMediaState.autoStartPending = true;
+            loginMusicOverlayDismissed = false;
+            const audio = getSiteMediaAudioElement();
+            if (audio) {
+                resetSiteMediaFadeState(audio, true);
+                audio.pause();
+                audio.removeAttribute('src');
+                audio.load();
+            }
+        } else if (siteMediaState.currentIndex >= nextPlaylist.length) {
+            siteMediaState.currentIndex = nextPlaylist.length - 1;
+        }
+
+        const shouldAutoStart = siteMediaState.autoStartPending
+            && nextPlaylist.length > 0
+            && siteMediaState.currentIndex < 0;
+
+        if (shouldAutoStart) {
+            playSiteTrackByIndex(0, true);
+            return;
+        }
+
+        updateSiteMediaPlayerUI();
+        updateLoginMusicStartOverlayVisibility();
+    }
+
+    function playSiteTrackByIndex(index, shouldAutoplay = true) {
+        const list = siteMediaState.playlist;
+        if (!list.length) return;
+
+        const boundedIndex = Math.max(0, Math.min(index, list.length - 1));
+        const track = list[boundedIndex];
+        if (!track || !track.audioUrl) return;
+
+        const audio = getSiteMediaAudioElement();
+        if (!audio) return;
+
+        resetSiteMediaFadeState(audio, true);
+
+        const nextSrc = track.audioUrl;
+        if (audio.src !== nextSrc) {
+            audio.src = nextSrc;
+        }
+
+        audio.volume = SITE_MEDIA_DEFAULT_VOLUME;
+
+        siteMediaState.currentIndex = boundedIndex;
+        siteMediaState.autoStartPending = false;
+
+        if (shouldAutoplay) {
+            audio.play().catch((error) => {
+                console.warn('Unable to autoplay selected track:', error);
+                armSiteMediaGestureUnlock();
+            });
+        } else {
+            audio.pause();
+        }
+
+        updateSiteMediaPlayerUI();
+    }
+
+    function findTrackIndexInPlaylist(playlist, beatId, beat) {
+        if (!Array.isArray(playlist) || !playlist.length) return -1;
+
+        const normalizedId = String(beatId || beat?.id || '').trim();
+        if (normalizedId) {
+            const byId = playlist.findIndex((track) => String(track.id || '').trim() === normalizedId);
+            if (byId >= 0) return byId;
+        }
+
+        const normalizedUrl = String(beat?.audioUrl || '').trim();
+        if (normalizedUrl) {
+            const byUrl = playlist.findIndex((track) => String(track.audioUrl || '').trim() === normalizedUrl);
+            if (byUrl >= 0) return byUrl;
+        }
+
+        return -1;
+    }
+
+    function toggleSiteMediaPlayback() {
+        const audio = getSiteMediaAudioElement();
+        if (!audio) return;
+
+        const hasCurrent = siteMediaState.currentIndex >= 0 && siteMediaState.currentIndex < siteMediaState.playlist.length;
+        if (!hasCurrent) return;
+
+        if (audio.paused) {
+            audio.play().catch((error) => {
+                console.warn('Unable to resume audio playback:', error);
+            });
+        } else {
+            audio.pause();
+        }
+    }
+
+    function stopSiteMediaPlayback() {
+        const audio = getSiteMediaAudioElement();
+        if (!audio) return;
+
+        resetSiteMediaFadeState(audio, true);
+        audio.pause();
+        audio.currentTime = 0;
+        siteMediaState.isPlaying = false;
+        updateSiteMediaPlayerUI();
+    }
+
+    function playNextSiteTrack() {
+        const list = siteMediaState.playlist;
+        if (!list.length) return;
+
+        const nextIndex = siteMediaState.currentIndex >= 0
+            ? (siteMediaState.currentIndex + 1) % list.length
+            : 0;
+        playSiteTrackByIndex(nextIndex, true);
+    }
+
+    function playPreviousSiteTrack() {
+        const list = siteMediaState.playlist;
+        if (!list.length) return;
+
+        const prevIndex = siteMediaState.currentIndex > 0
+            ? siteMediaState.currentIndex - 1
+            : list.length - 1;
+        playSiteTrackByIndex(prevIndex, true);
+    }
+
+    function handleProdbyennePlayerMessage(event) {
+        if (event.origin !== window.location.origin) return;
+
+        const payload = event.data;
+        if (!payload || payload.source !== 'prodbyenne-embed') return;
+
+        ensureSiteMediaPlayer();
+
+        if (payload.type === 'prodbyenne:playlist') {
+            const incomingPlaylist = Array.isArray(payload.playlist) ? payload.playlist : [];
+            const hasExistingTracks = siteMediaState.playlist.length > 0;
+
+            // Ignore empty sync payloads from embed boot when we already have an active playlist.
+            if (!incomingPlaylist.length && hasExistingTracks) {
+                return;
+            }
+
+            setSiteMediaPlaylist(incomingPlaylist);
+            return;
+        }
+
+        if (payload.type === 'prodbyenne:playBeat') {
+            const incomingPlaylist = Array.isArray(payload.playlist) && payload.playlist.length
+                ? payload.playlist
+                : siteMediaState.playlist;
+            setSiteMediaPlaylist(incomingPlaylist);
+
+            const index = findTrackIndexInPlaylist(siteMediaState.playlist, payload.beatId, payload.beat);
+            if (index < 0) return;
+
+            const sameTrack = siteMediaState.currentIndex === index;
+            if (sameTrack && payload.toggleIfSame) {
+                toggleSiteMediaPlayback();
+                return;
+            }
+
+            if (sameTrack) {
+                const audio = getSiteMediaAudioElement();
+                if (audio && audio.paused) {
+                    audio.play().catch((error) => {
+                        console.warn('Unable to resume audio playback:', error);
+                    });
+                }
+                updateSiteMediaPlayerUI();
+                return;
+            }
+
+            playSiteTrackByIndex(index, true);
+            return;
+        }
+
+        if (payload.type === 'prodbyenne:control') {
+            if (payload.action === 'toggle') {
+                toggleSiteMediaPlayback();
+                return;
+            }
+            if (payload.action === 'stop') {
+                stopSiteMediaPlayback();
+                return;
+            }
+            if (payload.action === 'next') {
+                playNextSiteTrack();
+                return;
+            }
+            if (payload.action === 'prev') {
+                playPreviousSiteTrack();
+                return;
+            }
+        }
+    }
+
+    window.addEventListener('message', handleProdbyennePlayerMessage);
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeThemeToggle();
+        ensureSiteMediaPlayer();
+        ensureLoginMusicStartOverlay();
+        bindLoginMusicStartGesture();
+        ensureProdbyennePlaylistPreload();
+        preloadSiteMediaPlaylistFromApi();
+        updateSiteMediaPlayerUI();
+        updateLoginMusicStartOverlayVisibility();
+    });
+
+function dismissBookingToast(toast) {
+    if (!toast || toast.dataset.dismissing === '1') return;
+
+    toast.dataset.dismissing = '1';
+    if (toast._hideTimer) clearTimeout(toast._hideTimer);
+    if (toast._removeTimer) clearTimeout(toast._removeTimer);
+
+    toast.classList.remove('is-visible');
+    toast.classList.add('is-leaving');
+
+    toast._removeTimer = setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, bookingToastExitMs);
+}
+
+function getBookingsToastContainer() {
+    let container = document.getElementById('bookings-toast-container');
+    if (container) return container;
+
+    container = document.createElement('div');
+    container.id = 'bookings-toast-container';
+    container.className = 'bookings-toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+function clearBookingToasts() {
+    const container = document.getElementById('bookings-toast-container');
+    if (!container) return;
+    Array.from(container.children).forEach((toast) => {
+        if (toast._hideTimer) clearTimeout(toast._hideTimer);
+        if (toast._removeTimer) clearTimeout(toast._removeTimer);
+    });
+    container.innerHTML = '';
+}
+
+function showBookingToast(message, variant = 'info') {
+    if (!message) return;
+
+    const container = getBookingsToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `bookings-toast bookings-toast-${variant}`;
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+
+    const messageText = document.createElement('span');
+    messageText.className = 'bookings-toast-text';
+    messageText.textContent = message;
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'bookings-toast-close';
+    closeButton.setAttribute('aria-label', 'Dismiss booking notification');
+    closeButton.textContent = 'x';
+    closeButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        dismissBookingToast(toast);
+    });
+
+    toast.appendChild(messageText);
+    toast.appendChild(closeButton);
+    toast.addEventListener('click', () => dismissBookingToast(toast));
+    container.appendChild(toast);
+
+    if (container.children.length > 4) {
+        container.removeChild(container.firstElementChild);
+    }
+
+    requestAnimationFrame(() => {
+        toast.classList.add('is-visible');
+    });
+
+    toast._hideTimer = setTimeout(() => {
+        dismissBookingToast(toast);
+    }, bookingToastTimeoutMs);
+}
+
+function getBookingToastMessage(eventName, booking) {
+    const isAdmin = currentUserRole === 'admin';
+    const who = getBookingWhoLabel(booking);
+    const service = String(booking?.service || 'a service');
+
+    if (eventName === 'created') {
+        return isAdmin
+            ? `New booking request from ${who} for ${service}.`
+            : `Your booking request for ${service} was received.`;
+    }
+
+    if (eventName === 'updated') {
+        const status = String(booking?.status || '').toLowerCase();
+        if (status === 'accepted') {
+            return isAdmin
+                ? `Booking from ${who} was accepted.`
+                : 'Your booking request was accepted.';
+        }
+
+        if (status === 'rejected') {
+            return isAdmin
+                ? `Booking from ${who} was rejected.`
+                : 'Your booking request was rejected.';
+        }
+
+        return isAdmin
+            ? `Booking from ${who} was updated.`
+            : `Your booking request was updated.`;
+    }
+
+    if (eventName === 'deleted') {
+        return isAdmin
+            ? `Booking from ${who} was removed.`
+            : `Your booking request was removed.`;
+    }
+
+    if (eventName === 'cleared') {
+        return isAdmin
+            ? 'All booking requests were cleared.'
+            : 'Booking requests were cleared.';
+    }
+
+    return '';
+}
+
+function isBookingsModalOpen() {
+    const modal = document.getElementById('bookings-modal');
+    return !!modal && modal.style.display !== 'none';
+}
+
+function toDateInputValue(dateValue) {
+    const date = dateValue ? new Date(dateValue) : null;
+    if (!date || Number.isNaN(date.getTime())) return '';
+    return date.toISOString().slice(0, 10);
+}
+
+function updateUserAvatarChip() {
+    const chip = document.getElementById('user-avatar-chip');
+    const image = document.getElementById('user-avatar-image');
+    const previewImage = document.getElementById('user-avatar-preview-image');
+    const previewName = document.getElementById('user-avatar-preview-name');
+    if (!chip || !image || !previewImage || !previewName) return;
+
+    chip.classList.toggle('is-online', !!token);
+
+    const imageUrl = String(currentUserProfile?.profileImageUrl || '').trim();
+    if (!imageUrl) {
+        chip.classList.add('hidden');
+        image.removeAttribute('src');
+        previewImage.removeAttribute('src');
+        previewName.textContent = '';
+        return;
+    }
+
+    const resolvedUrl = imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`;
+    image.src = resolvedUrl;
+    previewImage.src = resolvedUrl;
+    previewName.textContent = currentUserProfile?.fullName || currentUserProfile?.username || 'Profile Picture';
+    chip.classList.remove('hidden');
+}
+
+
+function closeUserAvatarPreview() {
+    const preview = document.getElementById('user-avatar-preview');
+    if (!preview) return;
+    preview.style.display = 'none';
+}
+
+function populateProfileSidebar(profile) {
+    const safeProfile = profile || {};
+    const summaryName = document.getElementById('profile-summary-name');
+    const summaryEmail = document.getElementById('profile-summary-email');
+    const summaryAvatar = document.getElementById('profile-summary-avatar');
+    const usernameField = document.getElementById('profile-settings-username');
+    const fullNameField = document.getElementById('profile-settings-full-name');
+    const dobField = document.getElementById('profile-settings-dob');
+    const interestField = document.getElementById('profile-settings-interest');
+    const emailField = document.getElementById('profile-settings-email');
+    const contactField = document.getElementById('profile-settings-contact-number');
+    const imageField = document.getElementById('profile-settings-image');
+    const viewImage = document.getElementById('profile-view-image');
+    const viewFallback = document.querySelector('.profile-view-fallback');
+    const viewName = document.getElementById('profile-view-name');
+    const viewUsername = document.getElementById('profile-view-username');
+    const viewEmail = document.getElementById('profile-view-email');
+    const viewContact = document.getElementById('profile-view-contact');
+    const viewInterest = document.getElementById('profile-view-interest');
+
+    if (usernameField) usernameField.value = safeProfile.username || '';
+    if (fullNameField) fullNameField.value = safeProfile.fullName || '';
+    if (dobField) dobField.value = toDateInputValue(safeProfile.dateOfBirth);
+    if (interestField) interestField.value = safeProfile.interest || '';
+    if (emailField) emailField.value = safeProfile.email || '';
+    if (contactField) contactField.value = safeProfile.contactNumber || '';
+    if (imageField) imageField.value = '';
+
+    if (summaryName) {
+        summaryName.textContent = safeProfile.fullName || safeProfile.username || 'My Profile';
+    }
+
+    if (summaryEmail) {
+        summaryEmail.textContent = safeProfile.email || '';
+    }
+
+    const summaryImageUrl = String(safeProfile.profileImageUrl || '').trim();
+    const resolvedProfileImageUrl = summaryImageUrl
+        ? (summaryImageUrl.startsWith('http') ? summaryImageUrl : `http://localhost:5000${summaryImageUrl}`)
+        : '';
+
+    if (summaryAvatar) {
+        if (resolvedProfileImageUrl) {
+            summaryAvatar.src = resolvedProfileImageUrl;
+            summaryAvatar.classList.remove('hidden');
+        } else {
+            summaryAvatar.removeAttribute('src');
+            summaryAvatar.classList.add('hidden');
+        }
+    }
+
+    if (viewImage) {
+        if (resolvedProfileImageUrl) {
+            viewImage.src = resolvedProfileImageUrl;
+            viewImage.classList.remove('hidden');
+            if (viewFallback) viewFallback.classList.add('hidden');
+        } else {
+            viewImage.removeAttribute('src');
+            viewImage.classList.add('hidden');
+            if (viewFallback) viewFallback.classList.remove('hidden');
+        }
+    }
+
+    if (viewName) viewName.textContent = safeProfile.fullName || 'Not set';
+    if (viewUsername) viewUsername.textContent = safeProfile.username || 'Not set';
+    if (viewEmail) viewEmail.textContent = safeProfile.email || 'Not set';
+    if (viewContact) viewContact.textContent = safeProfile.contactNumber || 'Not set';
+    if (viewInterest) viewInterest.textContent = safeProfile.interest || 'Not set';
+
+    updateUserAvatarChip();
+}
+
+function setProfileSidebarMode(mode) {
+    const summary = document.getElementById('profile-sidebar-summary');
+    const editFields = document.getElementById('profile-sidebar-edit-fields');
+    const viewPanel = document.getElementById('profile-sidebar-view-panel');
+    const dangerPanel = document.getElementById('profile-sidebar-danger');
+
+    const setVisibility = (element, isVisible) => {
+        if (!element) return;
+        element.classList.toggle('hidden', !isVisible);
+        element.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+    };
+
+    setVisibility(summary, mode === 'summary');
+    setVisibility(editFields, mode === 'edit');
+    setVisibility(viewPanel, mode === 'view');
+    setVisibility(dangerPanel, mode === 'delete');
+}
+
+function openProfileSidebarViewMode() {
+    setProfileSidebarMode('view');
+}
+
+function closeProfileSidebarViewMode() {
+    setProfileSidebarMode('summary');
+}
+
+function openProfileSidebarEditMode() {
+    setProfileSidebarMode('edit');
+}
+
+function closeProfileSidebarEditMode() {
+    setProfileSidebarMode('summary');
+}
+
+function openProfileSidebarDeleteMode() {
+    const reasonField = document.getElementById('delete-account-reason');
+    if (reasonField) {
+        reasonField.value = '';
+    }
+    setProfileSidebarMode('delete');
+}
+
+function closeProfileSidebarDeleteMode() {
+    setProfileSidebarMode('summary');
+}
+
+function getProfileSidebarMinimizedStorageKey() {
+    const userId = getCurrentUserIdSafe();
+    if (!userId) return '';
+    return `profileSidebarMinimized:${userId}`;
+}
+
+function getStoredProfileSidebarMinimized() {
+    const key = getProfileSidebarMinimizedStorageKey();
+    if (!key) return false;
+
+    try {
+        return localStorage.getItem(key) === '1';
+    } catch (error) {
+        return false;
+    }
+}
+
+function setStoredProfileSidebarMinimized(isMinimized) {
+    const key = getProfileSidebarMinimizedStorageKey();
+    if (!key) return;
+
+    try {
+        localStorage.setItem(key, isMinimized ? '1' : '0');
+    } catch (error) {
+        // Ignore storage failures silently.
+    }
+}
+
+function getProfileSidebarOpenStorageKey() {
+    const userId = getCurrentUserIdSafe();
+    if (!userId) return '';
+    return `profileSidebarOpen:${userId}`;
+}
+
+function getStoredProfileSidebarOpen() {
+    const key = getProfileSidebarOpenStorageKey();
+    if (!key) return false;
+
+    try {
+        return localStorage.getItem(key) === '1';
+    } catch (error) {
+        return false;
+    }
+}
+
+function setStoredProfileSidebarOpen(isOpen) {
+    const key = getProfileSidebarOpenStorageKey();
+    if (!key) return;
+
+    try {
+        localStorage.setItem(key, isOpen ? '1' : '0');
+    } catch (error) {
+        // Ignore storage failures silently.
+    }
+}
+
+function applyStoredProfileSidebarMinimizedState() {
+    const sidebar = document.getElementById('profile-sidebar');
+    if (!sidebar) return;
+
+    sidebar.classList.toggle('is-minimized', getStoredProfileSidebarMinimized());
+}
+
+function toggleProfileSidebarMinimize() {
+    const sidebar = document.getElementById('profile-sidebar');
+    if (!sidebar) return;
+    const isNowMinimized = !sidebar.classList.contains('is-minimized');
+    sidebar.classList.toggle('is-minimized', isNowMinimized);
+    setStoredProfileSidebarMinimized(isNowMinimized);
+}
+
+async function fetchMyProfile() {
+    if (!token) return;
+
+    const response = await fetch('http://localhost:5000/me', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to load profile');
+    }
+
+    const profile = await response.json();
+    currentUserProfile = profile;
+    populateProfileSidebar(profile);
+    applyStoredProfileSidebarMinimizedState();
+
+    const sidebar = document.getElementById('profile-sidebar');
+    const backdrop = document.getElementById('profile-sidebar-backdrop');
+    if (sidebar && backdrop) {
+        const shouldOpen = getStoredProfileSidebarOpen();
+        sidebar.style.display = shouldOpen ? 'flex' : 'none';
+        backdrop.style.display = shouldOpen ? 'block' : 'none';
+    }
+}
+
+function toggleProfileSidebar() {
+    if (!token) return;
+
+    const sidebar = document.getElementById('profile-sidebar');
+    const backdrop = document.getElementById('profile-sidebar-backdrop');
+    if (!sidebar || !backdrop) return;
+
+    const isOpen = sidebar.style.display !== 'none';
+    if (isOpen) {
+        closeProfileSidebar();
+        return;
+    }
+
+    closeUserAvatarPreview();
+    applyStoredProfileSidebarMinimizedState();
+    closeProfileSidebarEditMode();
+    sidebar.style.display = 'flex';
+    backdrop.style.display = 'block';
+    setStoredProfileSidebarOpen(true);
+}
+
+function closeProfileSidebar() {
+    const sidebar = document.getElementById('profile-sidebar');
+    const backdrop = document.getElementById('profile-sidebar-backdrop');
+    if (sidebar) {
+        sidebar.style.display = 'none';
+    }
+    if (backdrop) backdrop.style.display = 'none';
+    setProfileSidebarMode('summary');
+    setStoredProfileSidebarOpen(false);
+}
+
+function saveFloatingToolsPosition(left, top, side) {
+    try {
+        localStorage.setItem('floatingToolsPosition', JSON.stringify({ left, top, side }));
+    } catch (error) {
+        // Ignore storage failures silently.
+    }
+}
+
+function loadFloatingToolsPosition() {
+    try {
+        const raw = localStorage.getItem('floatingToolsPosition');
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (typeof parsed?.left !== 'number' || typeof parsed?.top !== 'number') return null;
+        return {
+            left: parsed.left,
+            top: parsed.top,
+            side: parsed.side === 'right' ? 'right' : (parsed.side === 'center' ? 'center' : 'left'),
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+function applyFloatingToolsPosition() {
+    const dock = document.getElementById('floating-tools');
+    if (!dock) return;
+
+    if (window.innerWidth <= 980) {
+        const reservedBottom = window.innerWidth <= 760 ? 118 : 112;
+        const maxTop = Math.max(8, window.innerHeight - dock.offsetHeight - reservedBottom);
+        dock.style.left = '8px';
+        dock.style.top = `${maxTop}px`;
+        return;
+    }
+
+    const saved = loadFloatingToolsPosition();
+    const side = saved?.side === 'right' ? 'right' : (saved?.side === 'center' ? 'center' : 'left');
+    const defaultLeft = side === 'right'
+        ? Math.max(8, window.innerWidth - dock.offsetWidth - 8)
+        : 12;
+    const defaultTop = 72;
+    const nextLeft = saved
+        ? (side === 'right'
+            ? Math.max(8, window.innerWidth - dock.offsetWidth - 8)
+            : saved.left)
+        : defaultLeft;
+    const nextTop = saved ? saved.top : defaultTop;
+
+    const maxLeft = Math.max(0, window.innerWidth - dock.offsetWidth - 8);
+    const maxTop = Math.max(0, window.innerHeight - dock.offsetHeight - 8);
+    dock.style.left = `${Math.min(maxLeft, Math.max(0, nextLeft))}px`;
+    dock.style.top = `${Math.min(maxTop, Math.max(0, nextTop))}px`;
+}
+
+function snapFloatingToolsToEdge() {
+    const dock = document.getElementById('floating-tools');
+    if (!dock) return;
+
+    if (window.innerWidth <= 980) {
+        applyFloatingToolsPosition();
+        return;
+    }
+
+    const snapThreshold = 72;
+    const rect = dock.getBoundingClientRect();
+    const leftGap = rect.left;
+    const rightGap = Math.max(0, window.innerWidth - rect.right);
+    const maxTop = Math.max(0, window.innerHeight - dock.offsetHeight - 8);
+    const top = Math.min(maxTop, Math.max(8, rect.top));
+
+    const isNearLeftEdge = leftGap <= snapThreshold;
+    const isNearRightEdge = rightGap <= snapThreshold;
+    const shouldSnap = isNearLeftEdge || isNearRightEdge;
+    const side = shouldSnap
+        ? (leftGap <= rightGap ? 'left' : 'right')
+        : 'center';
+
+    const left = side === 'left'
+        ? 8
+        : (side === 'right'
+            ? Math.max(8, window.innerWidth - dock.offsetWidth - 8)
+            : Math.min(Math.max(8, rect.left), Math.max(8, window.innerWidth - dock.offsetWidth - 8)));
+
+    if (!shouldSnap) {
+        dock.classList.remove('is-snapping');
+        dock.style.left = `${left}px`;
+        dock.style.top = `${top}px`;
+        saveFloatingToolsPosition(left, top, side);
+        return;
+    }
+
+    dock.classList.add('is-snapping');
+    dock.style.left = `${left}px`;
+    dock.style.top = `${top}px`;
+
+    window.setTimeout(() => {
+        dock.classList.remove('is-snapping');
+    }, 140);
+
+    saveFloatingToolsPosition(left, top, side);
+}
+
+function saveFloatingToolsCollapsed(isCollapsed) {
+    try {
+        localStorage.setItem('floatingToolsCollapsed', isCollapsed ? '1' : '0');
+    } catch (error) {
+        // Ignore storage failures silently.
+    }
+}
+
+function toggleFloatingToolsCollapsed() {
+    const dock = document.getElementById('floating-tools');
+    const toggle = document.getElementById('floating-tools-toggle');
+    if (!dock || !toggle) return;
+
+    const willCollapse = !dock.classList.contains('is-collapsed');
+    dock.classList.toggle('is-collapsed', willCollapse);
+    toggle.textContent = willCollapse ? '+' : '−';
+    saveFloatingToolsCollapsed(willCollapse);
+}
+
+function applyFloatingToolsCollapsed() {
+    const dock = document.getElementById('floating-tools');
+    const toggle = document.getElementById('floating-tools-toggle');
+    if (!dock || !toggle) return;
+
+    const storedValue = localStorage.getItem('floatingToolsCollapsed');
+    const isPhoneWidth = window.innerWidth <= 760;
+    const isCollapsed = storedValue === null
+        ? isPhoneWidth
+        : storedValue === '1';
+
+    dock.classList.toggle('is-collapsed', isCollapsed);
+    toggle.textContent = isCollapsed ? '+' : '−';
+}
+
+function initFloatingToolsDock() {
+    const dock = document.getElementById('floating-tools');
+    const handle = document.getElementById('floating-tools-handle');
+    if (!dock || !handle) return;
+
+    applyFloatingToolsPosition();
+    applyFloatingToolsCollapsed();
+
+    let dragState = null;
+
+    handle.addEventListener('pointerdown', (event) => {
+        if (window.innerWidth <= 980) return;
+        if (event.target.closest('button')) return;
+
+        const rect = dock.getBoundingClientRect();
+        dragState = {
+            offsetX: event.clientX - rect.left,
+            offsetY: event.clientY - rect.top,
+        };
+
+        dock.setPointerCapture(event.pointerId);
+        dock.classList.add('is-dragging');
+        event.preventDefault();
+    });
+
+    dock.addEventListener('pointermove', (event) => {
+        if (!dragState) return;
+
+        const maxLeft = Math.max(0, window.innerWidth - dock.offsetWidth - 8);
+        const maxTop = Math.max(0, window.innerHeight - dock.offsetHeight - 8);
+        const left = Math.min(maxLeft, Math.max(0, event.clientX - dragState.offsetX));
+        const top = Math.min(maxTop, Math.max(0, event.clientY - dragState.offsetY));
+
+        dock.style.left = `${left}px`;
+        dock.style.top = `${top}px`;
+    });
+
+    const finishDrag = (event) => {
+        if (!dragState) return;
+
+        dragState = null;
+        dock.classList.remove('is-dragging');
+        if (event && dock.hasPointerCapture(event.pointerId)) {
+            dock.releasePointerCapture(event.pointerId);
+        }
+
+        snapFloatingToolsToEdge();
+    };
+
+    dock.addEventListener('pointerup', finishDrag);
+    dock.addEventListener('pointercancel', finishDrag);
+
+    window.addEventListener('resize', () => {
+        applyFloatingToolsPosition();
+        applyFloatingToolsCollapsed();
+    });
+}
+
+async function saveMyProfile() {
+    if (!token) return;
+
+    const fullName = document.getElementById('profile-settings-full-name')?.value?.trim() || '';
+    const dateOfBirth = document.getElementById('profile-settings-dob')?.value || '';
+    const interest = document.getElementById('profile-settings-interest')?.value || '';
+    const email = document.getElementById('profile-settings-email')?.value?.trim() || '';
+    const contactNumber = document.getElementById('profile-settings-contact-number')?.value?.trim() || '';
+    const imageInput = document.getElementById('profile-settings-image');
+    const imageFile = imageInput?.files?.[0] || null;
+
+    if (!fullName || !dateOfBirth || !interest || !email || !contactNumber) {
+        alert('Please complete full name, date of birth, interest, email, and contact number.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('fullName', fullName);
+    formData.append('dateOfBirth', dateOfBirth);
+    formData.append('interest', interest);
+    formData.append('email', email);
+    formData.append('contactNumber', contactNumber);
+    if (imageFile) {
+        formData.append('profileImage', imageFile);
+    }
+
+    try {
+        const response = await fetch('http://localhost:5000/me', {
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload.message || 'Failed to update profile');
+        }
+
+        currentUserProfile = payload.user || currentUserProfile;
+        populateProfileSidebar(currentUserProfile);
+        closeProfileSidebarEditMode();
+        alert('Profile updated successfully.');
+    } catch (error) {
+        console.error('Profile update error:', error);
+        alert(error.message || 'Unable to update profile right now.');
+    }
+}
+
+async function deleteMyAccount() {
+    if (!token) return;
+
+    const reason = document.getElementById('delete-account-reason')?.value?.trim() || '';
+    if (!reason) {
+        alert('Please provide a reason before deleting your account.');
+        return;
+    }
+
+    const confirmed = window.confirm('Delete your account permanently? This cannot be undone.');
+    if (!confirmed) return;
+
+    const requiredPhrase = 'EnneIsTheBest';
+    const typedPhrase = window.prompt(`Type ${requiredPhrase} to confirm account deletion.`);
+    if (typedPhrase !== requiredPhrase) {
+        alert('Deletion cancelled. Confirmation phrase did not match.');
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:5000/me', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ reason }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload.message || 'Failed to delete account');
+        }
+
+        token = null;
+        currentUserRole = null;
+        currentUserProfile = null;
+        selectedUser = null;
+        setAuthView(false);
+        closeProfileSidebar();
+        closeUserAvatarPreview();
+        closeChatModal();
+        alert('Your account has been deleted.');
+    } catch (error) {
+        console.error('Delete account error:', error);
+        alert(error.message || 'Unable to delete account right now.');
+    }
+}
+
+function isChatPanelVisible() {
+    const chat = document.getElementById('chat');
+    if (!chat) return false;
+    return chat.style.display !== 'none' && !chat.classList.contains('hidden');
+}
+
+function getCurrentUserIdSafe() {
+    if (!token) return '';
+    try {
+        return normalizeObjectId(getUserIdFromToken(token));
+    } catch (error) {
+        return '';
+    }
+}
+
+function getUserDisplayName(user) {
+    if (!user) return 'Unknown';
+    return String(user.fullName || user.username || 'Unknown');
+}
+
+function getMessageSenderId(message) {
+    if (!message) return '';
+
+    const candidate = message.senderId
+        || message.sender
+        || message.senderUser
+        || message?.sender?._id
+        || message?.sender?.id;
+
+    return normalizeObjectId(candidate);
+}
+
+function resolveUserAvatarUrl(user) {
+    const raw = String(user?.profileImageUrl || '').trim();
+    if (!raw) return '';
+    return raw.startsWith('http') ? raw : `http://localhost:5000${raw}`;
+}
+
+function resolveChatMediaUrl(mediaUrl) {
+    const raw = String(mediaUrl || '').trim();
+    if (!raw) return '';
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    if (raw.startsWith('/')) return `http://localhost:5000${raw}`;
+    return raw;
+}
+
+function getChatAvatarInitial(name) {
+    const label = String(name || '').trim();
+    return label ? label.charAt(0).toUpperCase() : '?';
+}
+
+function createChatMessageElement(content, options = {}) {
+    const chatRow = document.createElement('div');
+    chatRow.className = `chat-message-row ${options.isSent ? 'sent' : 'received'}`;
+
+    const avatar = document.createElement('img');
+    avatar.className = 'chat-message-avatar';
+    avatar.alt = options.avatarName || (options.isSent ? 'You' : 'User');
+
+    const avatarFallback = document.createElement('span');
+ 
+    avatarFallback.className = 'chat-message-avatar-fallback';
+    avatarFallback.textContent = getChatAvatarInitial(options.avatarName || (options.isSent ? 'You' : 'User'));
+
+    const avatarUrl = String(options.avatarUrl || '').trim();
+    if (avatarUrl) {
+        avatar.src = avatarUrl;
+    }
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('chat-bubble', options.isSent ? 'sent' : 'received');
+    const messageText = String(content || '').trim();
+    const mediaUrl = resolveChatMediaUrl(options.mediaUrl);
+    const messageType = String(options.messageType || 'text');
+
+    if (mediaUrl) {
+        const mediaWrap = document.createElement('div');
+        mediaWrap.className = 'chat-message-media-wrap';
+
+        if (messageType === 'image') {
+            const img = document.createElement('img');
+            img.className = 'chat-message-media chat-message-image';
+            img.src = mediaUrl;
+            img.alt = options.mediaName || 'Image attachment';
+            mediaWrap.appendChild(img);
+        } else if (messageType === 'video') {
+            const video = document.createElement('video');
+            video.className = 'chat-message-media chat-message-video';
+            video.src = mediaUrl;
+            video.controls = true;
+            video.preload = 'metadata';
+            mediaWrap.appendChild(video);
+        } else if (messageType === 'audio') {
+            const audio = document.createElement('audio');
+            audio.className = 'chat-message-media chat-message-audio';
+            audio.src = mediaUrl;
+            audio.controls = true;
+            mediaWrap.appendChild(audio);
+        } else {
+            const fileLink = document.createElement('a');
+            fileLink.href = mediaUrl;
+            fileLink.target = '_blank';
+            fileLink.rel = 'noopener noreferrer';
+            fileLink.className = 'chat-file-pill';
+            fileLink.textContent = options.mediaName || 'Open file';
+            mediaWrap.appendChild(fileLink);
+        }
+
+        if (options.allowDownload) {
+            const downloadLink = document.createElement('a');
+            downloadLink.href = mediaUrl;
+            downloadLink.className = 'chat-download-link';
+            downloadLink.textContent = `Download ${options.mediaName || 'file'}`;
+            downloadLink.setAttribute('download', options.mediaName || 'attachment');
+            mediaWrap.appendChild(downloadLink);
+        }
+
+        bubble.appendChild(mediaWrap);
+    }
+
+    if (messageText) {
+        const textNode = document.createElement('div');
+        textNode.className = 'chat-message-text';
+        textNode.textContent = messageText;
+        bubble.appendChild(textNode);
+    }
+
+    if (avatarUrl) {
+        chatRow.appendChild(avatar);
+    } else {
+        chatRow.appendChild(avatarFallback);
+    }
+    chatRow.appendChild(bubble);
+    return chatRow;
+}
+
+function appendChatMessage(content, options = {}) {
+    const chatMessages = document.getElementById('chat-messages-container');
+    if (!chatMessages) return;
+
+    const node = createChatMessageElement(content, options);
+    chatMessages.appendChild(node);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function closeChatEmojiPicker() {
+    const picker = document.getElementById('chat-emoji-picker');
+    const toggle = document.getElementById('chat-emoji-toggle');
+    if (!picker || !toggle) return;
+
+    picker.classList.remove('is-open');
+    toggle.classList.remove('is-open');
+}
+
+function clearPendingChatMedia() {
+    pendingChatMediaFile = null;
+    const mediaInput = document.getElementById('chat-media-input');
+    const selected = document.getElementById('chat-media-selected');
+    if (mediaInput) mediaInput.value = '';
+    if (selected) {
+        selected.textContent = '';
+        selected.classList.add('hidden');
+    }
+}
+
+function initializeChatMediaAttachmentPicker() {
+    const attachButton = document.getElementById('chat-attach-toggle');
+    const mediaInput = document.getElementById('chat-media-input');
+    const selected = document.getElementById('chat-media-selected');
+    if (!attachButton || !mediaInput || !selected) return;
+
+    if (!attachButton.dataset.bound) {
+        attachButton.addEventListener('click', () => {
+            mediaInput.click();
+        });
+        attachButton.dataset.bound = '1';
+    }
+
+    if (!mediaInput.dataset.bound) {
+        mediaInput.addEventListener('change', () => {
+            const file = mediaInput.files?.[0] || null;
+            pendingChatMediaFile = file;
+
+            if (!file) {
+                selected.textContent = '';
+                selected.classList.add('hidden');
+                return;
+            }
+
+            selected.textContent = `Attached: ${file.name}`;
+            selected.classList.remove('hidden');
+        });
+        mediaInput.dataset.bound = '1';
+    }
+}
+
+function initializeChatEmojiPicker() {
+    const picker = document.getElementById('chat-emoji-picker');
+    const toggle = document.getElementById('chat-emoji-toggle');
+    const input = document.getElementById('chat-input');
+    if (!picker || !toggle || !input) return;
+
+    if (!picker.dataset.initialized) {
+        picker.innerHTML = CHAT_EMOJIS.map((emoji) => (`<button type="button" class="chat-emoji-option" data-emoji="${emoji}" aria-label="Insert ${emoji}">${emoji}</button>`)).join('');
+        picker.dataset.initialized = '1';
+    }
+
+    if (!toggle.dataset.bound) {
+        toggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const willOpen = !picker.classList.contains('is-open');
+            if (willOpen) {
+                picker.classList.add('is-open');
+                toggle.classList.add('is-open');
+            } else {
+                closeChatEmojiPicker();
+            }
+        });
+        toggle.dataset.bound = '1';
+    }
+
+    if (!picker.dataset.bound) {
+        picker.addEventListener('click', (event) => {
+            const target = event.target.closest('.chat-emoji-option');
+            if (!target || !target.dataset.emoji) return;
+
+            const emoji = target.dataset.emoji;
+            const cursorStart = input.selectionStart || input.value.length;
+            const cursorEnd = input.selectionEnd || input.value.length;
+            const nextValue = `${input.value.slice(0, cursorStart)}${emoji}${input.value.slice(cursorEnd)}`;
+
+            input.value = nextValue;
+            const nextCursor = cursorStart + emoji.length;
+            input.focus();
+            input.setSelectionRange(nextCursor, nextCursor);
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!picker.classList.contains('is-open')) return;
+            const clickedInsidePicker = event.target.closest('#chat-emoji-picker');
+            const clickedToggle = event.target.closest('#chat-emoji-toggle');
+            if (!clickedInsidePicker && !clickedToggle) {
+                closeChatEmojiPicker();
+            }
+        });
+
+        picker.dataset.bound = '1';
+    }
+}
+
+function updateUsersOnlineNotificationBadge() {
+    const badge = document.getElementById('users-online-notification');
+    if (!badge) return;
+
+    const currentUserId = getCurrentUserIdSafe();
+    const count = (Array.isArray(currentUsers) ? currentUsers : []).filter((user) => {
+        if (!user?.isOnline) return false;
+        const id = normalizeObjectId(user._id);
+        return !currentUserId || id !== currentUserId;
+    }).length;
+
+    onlineUsersCount = count;
+    if (count > 0) {
+        badge.textContent = String(count);
+        badge.classList.remove('hidden');
+    } else {
+        badge.textContent = '0';
+        badge.classList.add('hidden');
+    }
+}
+
+function updateMessagesNotificationBadge() {
+    const badge = document.getElementById('messages-notification');
+    if (!badge) return;
+
+    if (unreadMessageTotal > 0) {
+        badge.textContent = String(unreadMessageTotal);
+        badge.classList.remove('hidden');
+    } else {
+        badge.textContent = '0';
+        badge.classList.add('hidden');
+    }
+}
+
+function recalculateUnreadMessagesTotal() {
+    unreadMessageTotal = Object.values(unreadMessageByUser).reduce((sum, value) => {
+        const nextValue = Number(value) || 0;
+        return sum + nextValue;
+    }, 0);
+    updateMessagesNotificationBadge();
+}
+
+function addUnreadMessageFromSender(senderId) {
+    const id = normalizeObjectId(senderId);
+    if (!id) return;
+
+    unreadMessageByUser[id] = (Number(unreadMessageByUser[id]) || 0) + 1;
+    recalculateUnreadMessagesTotal();
+}
+
+function clearUnreadForUser(userId) {
+    const id = normalizeObjectId(userId);
+    if (!id || !unreadMessageByUser[id]) return;
+
+    delete unreadMessageByUser[id];
+    recalculateUnreadMessagesTotal();
+}
+
+function clearAllUnreadMessages() {
+    unreadMessageByUser = {};
+    unreadMessageTotal = 0;
+    updateMessagesNotificationBadge();
+}
+
+function recalculateUserPendingBookingNotifications() {
+    if (currentUserRole === 'admin') {
+        return pendingBookingNotifications;
+    }
+
+    const count = (Array.isArray(currentBookings) ? currentBookings : []).filter((booking) => {
+        if (!shouldIncludeBookingForCurrentUser(booking)) return false;
+        return String(booking?.status || 'pending').toLowerCase() === 'pending';
+    }).length;
+
+    return count;
+}
+
+function updateBookingsNotificationBadge() {
+    const badge = document.getElementById('bookings-notification');
+    if (!badge) return;
+
+    const count = recalculateUserPendingBookingNotifications();
+
+    if (count > 0) {
+        badge.textContent = String(count);
+        badge.classList.remove('hidden');
+    } else {
+        badge.textContent = '0';
+        badge.classList.add('hidden');
+    }
+}
+
+function shouldIncludeBookingForCurrentUser(booking) {
+    if (!booking) return false;
+    if (currentUserRole === 'admin') return true;
+    if (!token) return false;
+
+    const currentUserId = normalizeObjectId(getUserIdFromToken(token));
+    const requesterUserId = normalizeObjectId(booking.requesterUser);
+    return !!currentUserId && !!requesterUserId && currentUserId === requesterUserId;
+}
+
+function upsertBookingInState(booking) {
+    if (!booking) return;
+
+    const id = String(booking.id || booking._id || '');
+    if (!id) return;
+
+    const index = currentBookings.findIndex((existingBooking) => String(existingBooking.id || existingBooking._id) === id);
+    if (index === -1) {
+        currentBookings.unshift(booking);
+        return;
+    }
+
+    currentBookings[index] = { ...currentBookings[index], ...booking };
+}
+
+function removeBookingFromState(bookingId) {
+    const normalizedId = String(bookingId || '');
+    if (!normalizedId) return;
+    currentBookings = currentBookings.filter((booking) => String(booking.id || booking._id) !== normalizedId);
+}
+
+function handleIncomingBookingCreated(booking) {
+    if (!shouldIncludeBookingForCurrentUser(booking)) return;
+    upsertBookingInState(booking);
+    showBookingToast(getBookingToastMessage('created', booking), 'created');
+
+    if (currentUserRole === 'admin' && !isBookingsModalOpen()) {
+        pendingBookingNotifications += 1;
+    }
+
+    updateBookingsNotificationBadge();
+
+    if (isBookingsModalOpen()) {
+        populateBookingServiceFilter(currentBookings);
+        renderBookingsList();
+    }
+}
+
+function handleIncomingBookingUpdated(booking) {
+    const bookingId = String(booking?.id || booking?._id || '');
+    const existsInState = currentBookings.some((existingBooking) => String(existingBooking.id || existingBooking._id) === bookingId);
+
+    if (!shouldIncludeBookingForCurrentUser(booking) && !existsInState) {
+        return;
+    }
+
+    upsertBookingInState(booking);
+    showBookingToast(getBookingToastMessage('updated', booking), 'updated');
+    updateBookingsNotificationBadge();
+
+    if (isBookingsModalOpen()) {
+        populateBookingServiceFilter(currentBookings);
+        renderBookingsList();
+    }
+}
+
+function handleIncomingBookingDeleted(booking) {
+    if (!booking) return;
+
+    const existingBooking = currentBookings.find((item) => String(item.id || item._id) === String(booking.id || booking._id));
+    removeBookingFromState(booking.id || booking._id);
+    if (existingBooking || currentUserRole === 'admin') {
+        showBookingToast(getBookingToastMessage('deleted', existingBooking || booking), 'deleted');
+    }
+    updateBookingsNotificationBadge();
+
+    if (isBookingsModalOpen()) {
+        populateBookingServiceFilter(currentBookings);
+        renderBookingsList();
+    }
+}
+
+function handleIncomingBookingsCleared() {
+    currentBookings = [];
+    pendingBookingNotifications = 0;
+    updateBookingsNotificationBadge();
+    showBookingToast(getBookingToastMessage('cleared'), 'updated');
+
+    if (isBookingsModalOpen()) {
+        populateBookingServiceFilter(currentBookings);
+        renderBookingsList();
+    }
+}
+
+        function setAuthView(isLoggedIn, userRole = null) {
+        document.body.classList.toggle('auth-view', !isLoggedIn);
+
+        if (!isLoggedIn) {
+            loginMusicOverlayDismissed = false;
+        }
+
+        const loginSection = document.getElementById('login-section');
+        const signupSection = document.getElementById('signup-section');
+        const dashboard = document.getElementById('dashboard');
+                const addProfileButton = document.getElementById('add-profile-button');
+                const authOnlyButtons = [
+            document.getElementById('profile-settings-button'),
+            document.getElementById('logout-button'),
+            document.getElementById('chats-button'),
+            document.getElementById('chat-toggle-button'),
+            document.getElementById('bookings-button'),
+        ];
+        const actionRail = document.getElementById('action-rail');
+        const chatModal = document.getElementById('chat-modal');
+        const chatPanel = document.getElementById('chat');
+        const addProfileModal = document.getElementById('add-profile-modal');
+        const bookingsModal = document.getElementById('bookings-modal');
+        const floatingTools = document.getElementById('floating-tools');
+        const profileSidebar = document.getElementById('profile-sidebar');
+        const profileSidebarBackdrop = document.getElementById('profile-sidebar-backdrop');
+        const userAvatarChip = document.getElementById('user-avatar-chip');
+        const userAvatarPreview = document.getElementById('user-avatar-preview');
+
+        if (loginSection) {
+            loginSection.style.display = isLoggedIn ? 'none' : 'block';
+            if (!isLoggedIn) {
+                loginSection.classList.remove('hidden');
+            }
+        }
+
+        if (signupSection) {
+            signupSection.classList.add('hidden');
+            signupSection.classList.remove('fade-in', 'fade-out');
+            signupSection.style.display = 'none';
+        }
+
+        if (dashboard) {
+            dashboard.style.display = isLoggedIn ? 'block' : 'none';
+        }
+
+        if (floatingTools) {
+            floatingTools.style.display = isLoggedIn ? 'flex' : 'none';
+        }
+
+        authOnlyButtons.forEach((button) => {
+            if (!button) return;
+            button.style.display = isLoggedIn ? 'flex' : 'none';
+        });
+
+        if (addProfileButton) {
+            const isAdmin = isLoggedIn && userRole === 'admin';
+            addProfileButton.style.display = isAdmin ? 'flex' : 'none';
+        }
+
+        if (actionRail) {
+            actionRail.style.display = isLoggedIn ? 'flex' : 'none';
+            if (!isLoggedIn) {
+                actionRail.classList.remove('is-expanded');
+            }
+        }
+
+        if (!isLoggedIn) {
+            if (chatModal) chatModal.style.display = 'none';
+            if (chatPanel) {
+                chatPanel.style.display = 'none';
+                chatPanel.classList.add('hidden');
+                chatPanel.classList.remove('collapsed');
+            }
+            if (addProfileModal) addProfileModal.style.display = 'none';
+            if (bookingsModal) bookingsModal.style.display = 'none';
+            if (profileSidebar) profileSidebar.style.display = 'none';
+            if (profileSidebarBackdrop) profileSidebarBackdrop.style.display = 'none';
+            if (userAvatarPreview) userAvatarPreview.style.display = 'none';
+            if (userAvatarChip) userAvatarChip.classList.add('hidden');
+            currentBookings = [];
+            pendingBookingNotifications = 0;
+            currentUsers = [];
+            onlineUsersCount = 0;
+            currentUserProfile = null;
+            clearAllUnreadMessages();
+            updateBookingsNotificationBadge();
+            updateUsersOnlineNotificationBadge();
+            clearBookingToasts();
+        } else if (userRole !== 'admin' && addProfileModal) {
+            addProfileModal.style.display = 'none';
+        }
+
+        updateLoginMusicStartOverlayVisibility();
+    }
+
+    function redirectToAdminDashboard() {
+        window.location.hash = 'dashboard';
+        const dashboard = document.getElementById('dashboard');
+        if (dashboard) {
+            dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setupSocketListeners();
+        initFloatingToolsDock();
+        setAuthView(false);
+        initializeChatEmojiPicker();
+        initializeChatMediaAttachmentPicker();
+    });
 
   // Listen for incoming messages
   
@@ -254,8 +2482,14 @@ async function login() {
 
         // Save token and switch UI to dashboard
         token = data.token;
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
+        try {
+            localStorage.setItem('token', token);
+        } catch (storageError) {
+            console.warn('Unable to persist auth token to localStorage:', storageError);
+        }
+        currentUserRole = getUserRoleFromToken(token);
+        setAuthView(true, currentUserRole);
+        redirectToAdminDashboard();
        
 
         const userId = getUserIdFromToken(token);
@@ -268,6 +2502,13 @@ async function login() {
         // await fetchPosts();
         //fetch profiles after successful login 
         await fetchProfiles();
+        await fetchUsers();
+        await fetchMyProfile();
+        try {
+            await refreshBookingsNotifications();
+        } catch (refreshError) {
+            console.warn('Unable to preload booking notifications:', refreshError);
+        }
 
         // Reinitialize WebSocket listeners
         setupSocketListeners();
@@ -278,47 +2519,95 @@ async function login() {
     }
 }
 
+function togglePasswordVisibility(inputId, shouldShow) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.type = shouldShow ? 'text' : 'password';
+}
+
+function togglePasswordButton(buttonId, inputIdsCsv, labelId) {
+    const button = document.getElementById(buttonId);
+    if (!button) return;
+
+    const inputIds = String(inputIdsCsv || '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+
+    if (!inputIds.length) return;
+
+    const isVisible = button.getAttribute('aria-pressed') === 'true';
+    const nextVisible = !isVisible;
+
+    inputIds.forEach((inputId) => {
+        togglePasswordVisibility(inputId, nextVisible);
+    });
+
+    button.setAttribute('aria-pressed', nextVisible ? 'true' : 'false');
+    button.classList.toggle('is-active', nextVisible);
+
+    const label = document.getElementById(labelId);
+    if (label) {
+        if (nextVisible) {
+            label.textContent = inputIds.length > 1 ? 'Hide passwords' : 'Hide password';
+        } else {
+            label.textContent = inputIds.length > 1 ? 'View passwords' : 'View password';
+        }
+    }
+}
+
 function setupSocketListeners() {
     socket.off('receive_message'); // Remove existing listeners first
+    socket.off('user_logged_in');
+    socket.off('user_logged_out');
+    socket.off('users_updated');
+    socket.off('booking_created');
+    socket.off('booking_updated');
+    socket.off('booking_deleted');
+    socket.off('bookings_cleared');
+
+    socket.on('user_logged_in', ({ userId }) => {
+        console.log(`User ${userId} logged in`);
+        updateUserStatusIndicator(userId, true);
+    });
 
     socket.on('receive_message', (message) => {
     console.log('Message received:', message);
 
-    const chatModal = document.getElementById('chat');
-    if (!chatModal || chatModal.style.display === 'none') {
-        console.error('Chat modal is not visible or missing!');
+    const incomingSenderId = getMessageSenderId(message);
+    const currentUserId = getCurrentUserIdSafe();
+
+    if (!incomingSenderId || (currentUserId && incomingSenderId === currentUserId)) {
         return;
     }
 
-    const chatMessages = document.getElementById('chat-messages-container');
-    if (!chatMessages) {
-        console.error('Chat messages container not found!');
+    const activeSelectedUserId = normalizeObjectId(selectedUser?._id);
+    const isActiveChatForSender = !!incomingSenderId
+        && !!activeSelectedUserId
+        && incomingSenderId === activeSelectedUserId
+        && isChatPanelVisible();
+
+    if (!isActiveChatForSender) {
+        addUnreadMessageFromSender(incomingSenderId);
         return;
     }
 
-    if (selectedUser && selectedUser._id === message.senderId) {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('chat-bubble', 'received');
-        messageElement.innerText = message.content;
-
-        chatMessages.appendChild(messageElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    } else {
-        console.warn('Message not for the selected user or no user selected.');
-    }
+    appendChatMessage(String(message?.content || message?.text || ''), {
+        isSent: false,
+        avatarName: getUserDisplayName(selectedUser),
+        avatarUrl: resolveUserAvatarUrl(selectedUser),
+        messageType: message?.messageType,
+        mediaUrl: message?.mediaUrl,
+        mediaName: message?.mediaName,
+        allowDownload: !!message?.allowDownload,
+    });
 });
 
 
     socket.on('user_logged_out', ({ userId }) => {
         console.log(`User ${userId} logged out`);
 
-        const userElements = document.getElementById('users').children;
-        for (const userElement of userElements) {
-            if (userElement.dataset.userId === userId) {
-                userElement.style.color = 'gray';
-                userElement.innerText = `${userElement.innerText.split('(')[0]} (Offline)`;
-            }
-        }
+        updateUserStatusIndicator(userId, false);
 
         if (selectedUser && selectedUser._id === userId) {
             const chatModal = document.getElementById('chat-modal');
@@ -329,6 +2618,27 @@ function setupSocketListeners() {
             closeChat();
         }
     });
+
+    socket.on('users_updated', (users) => {
+        currentUsers = Array.isArray(users) ? users : [];
+
+        if (selectedUser?._id) {
+            const selectedUserId = normalizeObjectId(selectedUser._id);
+            const refreshedSelectedUser = currentUsers.find((user) => normalizeObjectId(user._id) === selectedUserId);
+            if (refreshedSelectedUser) {
+                selectedUser = refreshedSelectedUser;
+                updateChatHeaderName();
+            }
+        }
+
+        renderUsersModal(currentUsers);
+        updateUsersOnlineNotificationBadge();
+    });
+
+    socket.on('booking_created', handleIncomingBookingCreated);
+    socket.on('booking_updated', handleIncomingBookingUpdated);
+    socket.on('booking_deleted', handleIncomingBookingDeleted);
+    socket.on('bookings_cleared', handleIncomingBookingsCleared);
 }
 
    
@@ -350,8 +2660,13 @@ function setupSocketListeners() {
 
         // Reset UI
         token = null;
-        document.getElementById('dashboard').style.display = 'none';
-        document.getElementById('login-section').style.display = 'block';
+        try {
+            localStorage.removeItem('token');
+        } catch (storageError) {
+            console.warn('Unable to clear auth token from localStorage:', storageError);
+        }
+        currentUserRole = null;
+        setAuthView(false);
         // document.getElementById('open-users-modal').style.display = 'none';
 
  
@@ -370,28 +2685,61 @@ function setupSocketListeners() {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return payload.id;
     }
+
+        function getUserRoleFromToken(token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.role || null;
+            } catch (error) {
+                console.error('Unable to parse role from token:', error);
+                return null;
+            }
+        }
     async function signup() {
         const username = document.getElementById('signup-username').value;
         const password = document.getElementById('signup-password').value;
-        const role = document.getElementById('signup-role').value;
+        const confirmPassword = document.getElementById('signup-confirm-password').value;
+        const role = 'user';
+        const fullName = document.getElementById('signup-full-name').value.trim();
+        const dateOfBirth = document.getElementById('signup-dob').value;
+        const interest = document.getElementById('signup-interest').value;
+        const email = document.getElementById('signup-email').value.trim();
+        const contactNumber = document.getElementById('signup-contact-number').value.trim();
 
-        try {
-            const response = await fetch('http://localhost:5000/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, role }),
-            });
+        if (!password || !confirmPassword) {
+            alert('Please enter and confirm your password.');
+            return;
+        }
 
-            const data = await response.json();
-            if (response.ok) {
-                alert(data.message);
-                toggleSignupForm();
-            } else {
-                alert(data.message || 'Error signing up');
-            }
-        } catch (error) {
-            console.error('Signup error:', error);
-            alert('Unable to sign up right now.');
+        if (password !== confirmPassword) {
+            alert('Passwords do not match. Please re-enter them.');
+            return;
+        }
+
+        if (!fullName || !dateOfBirth || !interest || !email || !contactNumber) {
+            alert('Please fill in name, date of birth, interest, email, and contact number.');
+            return;
+        }
+
+        const payload = { username, password, role };
+        payload.fullName = fullName;
+        payload.dateOfBirth = dateOfBirth;
+        payload.interest = interest;
+        payload.email = email;
+        payload.contactNumber = contactNumber;
+
+        const response = await fetch('http://localhost:5000/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message);
+            toggleSignupForm(); // Hide the signup form after successful signup
+        } else {
+            alert(data.message || 'Error signing up');
         }
         }
 
@@ -399,25 +2747,30 @@ function setupSocketListeners() {
         const loginSection = document.getElementById('login-section');
         const signupSection = document.getElementById('signup-section');
 
+        if (!loginSection || !signupSection) return;
+
         if (signupSection.classList.contains('hidden')) {
-            // Remove the hidden class to prepare for fade-in
+            signupSection.style.display = 'block';
+            loginSection.style.display = 'none';
             signupSection.classList.remove('hidden');
             signupSection.classList.remove('fade-out');
             signupSection.classList.add('fade-in');
             loginSection.classList.add('hidden');
             loginSection.classList.add('fade-out');
+            loginSection.classList.remove('fade-in');
         } else {
-            // Start the fade-out animation
             signupSection.classList.remove('fade-in');
             signupSection.classList.add('fade-out');
 
             loginSection.classList.remove('fade-out');
-            loginSection.classList.add('fade-in');
-
-            // Wait for the animation to finish, then hide the element
-            setTimeout(() => {
-            signupSection.classList.add('hidden');
             loginSection.classList.remove('hidden');
+            loginSection.classList.add('fade-in');
+            loginSection.style.display = 'block';
+
+            setTimeout(() => {
+                signupSection.classList.add('hidden');
+                signupSection.style.display = 'none';
+                loginSection.classList.remove('hidden');
             }, 500); 
         }
     }
@@ -433,9 +2786,11 @@ function setupSocketListeners() {
 
                 const users = await response.json();
                 console.log('Fetched users:', users);
+                currentUsers = Array.isArray(users) ? users : [];
 
             
-                renderUsersModal(users); // Render for chat modal
+                renderUsersModal(currentUsers); // Render for chat modal
+                updateUsersOnlineNotificationBadge();
 
             } catch (error) {
                 console.error('Error fetching users:', error);
@@ -450,9 +2805,7 @@ function renderUsersModal(users) {
     usersList.innerHTML = ''; // Clear the modal user list
 
     users.forEach(user => {
-        const userItem = document.createElement('div');
-        userItem.className = 'user-item';
-        userItem.innerText = user.username;
+        const userItem = createUserElement(user);
 
         // Add event listener to open a chat with the user
         userItem.addEventListener('click', () => openChat(user));
@@ -460,6 +2813,36 @@ function renderUsersModal(users) {
         // Append the user to the users list in the modal
         usersList.appendChild(userItem);
     });
+
+    updateUsersOnlineNotificationBadge();
+}
+
+function updateUserStatusIndicator(userId, isOnline) {
+    currentUsers = currentUsers.map((user) => (
+        user._id === userId ? { ...user, isOnline } : user
+    ));
+
+    const userItem = document.querySelector(`#users-list .user-item[data-user-id="${userId}"]`);
+    if (!userItem) {
+        renderUsersModal(currentUsers);
+        return;
+    }
+
+    userItem.classList.toggle('online', isOnline);
+    userItem.classList.toggle('offline', !isOnline);
+
+    const statusLabel = userItem.querySelector('.user-status-label');
+    if (statusLabel) {
+        statusLabel.textContent = isOnline ? 'Online' : 'Offline';
+    }
+
+    const statusDot = userItem.querySelector('.user-status-dot');
+    if (statusDot) {
+        statusDot.classList.toggle('online', isOnline);
+        statusDot.classList.toggle('offline', !isOnline);
+    }
+
+    renderUsersModal(currentUsers);
 }
 
 
@@ -529,12 +2912,23 @@ async function fetchPosts() {
 // Function to toggle chat modal
 function toggleChatModal() {
     const chatModal = document.getElementById('chat-modal');
-    if (chatModal.style.display === 'block') {
-        chatModal.style.display = 'none'; // Hide the modal
-    } else {
-        chatModal.style.display = 'block'; // Show the modal
-        fetchUsers(); 
+    if (!chatModal) return;
+
+    if (chatModal.classList.contains('is-open')) {
+        closeUsers();
+        return;
     }
+
+    if (chatModal._closeTimer) {
+        clearTimeout(chatModal._closeTimer);
+        chatModal._closeTimer = null;
+    }
+
+    chatModal.style.display = 'block';
+    requestAnimationFrame(() => {
+        chatModal.classList.add('is-open');
+    });
+    fetchUsers(); 
 }
 
 
@@ -570,21 +2964,54 @@ function renderPosts(posts) {
 
 
 function openUsersModal() {
-    const usersModal = document.getElementById('users-modal');
+    const usersModal = document.getElementById('chat-modal');
+    if (!usersModal) return;
+
+    if (usersModal._closeTimer) {
+        clearTimeout(usersModal._closeTimer);
+        usersModal._closeTimer = null;
+    }
+
     usersModal.style.display = 'block';
+    requestAnimationFrame(() => {
+        usersModal.classList.add('is-open');
+    });
+    fetchUsers();
 }
 
 function closeUsers() {
     const usersModal = document.getElementById('chat-modal');
-    usersModal.style.display = 'none';
+    if (!usersModal) return;
+
+    usersModal.classList.remove('is-open');
+
+    if (usersModal._closeTimer) {
+        clearTimeout(usersModal._closeTimer);
+    }
+
+    usersModal._closeTimer = setTimeout(() => {
+        usersModal.style.display = 'none';
+        usersModal._closeTimer = null;
+    }, 280);
 }
 function minimiseUsers() {
     const usersModal = document.getElementById('chat-modal');
+    if (!usersModal) return;
+
     const minimiseButton = document.getElementById('minimise-users');
     const isCollapsed = usersModal.classList.toggle('collapsed');
 
     if (minimiseButton) {
         const icon = minimiseButton.querySelector('.window-icon');
+        if (icon) {
+            icon.classList.toggle('window-icon-minimize', !isCollapsed);
+            icon.classList.toggle('window-icon-expand', isCollapsed);
+        }
+    }
+
+    const collapseButton = document.getElementById('collapse-chat');
+    if (collapseButton) {
+        const icon = collapseButton.querySelector('.window-icon');
         if (icon) {
             icon.classList.toggle('window-icon-minimize', !isCollapsed);
             icon.classList.toggle('window-icon-expand', isCollapsed);
@@ -599,37 +3026,149 @@ function createUserElement(user) {
   const userElement = document.createElement('div');
   userElement.className = 'user-item';
   userElement.dataset.userId = user._id; // Use data-* attribute for the user ID
-  userElement.innerText = `${user.username} (${user.role}) - ${user.isOnline ? 'Online' : 'Offline'}`;
-  userElement.classList.add(user.isOnline ? 'online' : 'offline'); // Add a class for styling
+    userElement.classList.add(user.isOnline ? 'online' : 'offline'); // Add a class for styling
 
-  userElement.addEventListener('click', () => selectUser(user)); // Add click event
+    const leftWrap = document.createElement('div');
+    leftWrap.className = 'user-item-left';
+
+    const avatar = document.createElement('img');
+    avatar.className = 'user-item-avatar';
+    avatar.alt = getUserDisplayName(user);
+    const avatarUrl = resolveUserAvatarUrl(user);
+    if (avatarUrl) {
+        avatar.src = avatarUrl;
+    } else {
+        avatar.classList.add('hidden');
+    }
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'user-item-name';
+    nameSpan.textContent = getUserDisplayName(user);
+
+    const statusWrap = document.createElement('span');
+    statusWrap.className = 'user-status';
+
+    const statusDot = document.createElement('span');
+    statusDot.className = `user-status-dot ${user.isOnline ? 'online' : 'offline'}`;
+
+    const statusLabel = document.createElement('span');
+    statusLabel.className = 'user-status-label';
+    statusLabel.textContent = user.isOnline ? 'Online' : 'Offline';
+
+    statusWrap.appendChild(statusDot);
+    statusWrap.appendChild(statusLabel);
+
+        leftWrap.appendChild(avatar);
+        leftWrap.appendChild(nameSpan);
+
+        userElement.appendChild(leftWrap);
+    userElement.appendChild(statusWrap);
 
   return userElement;
 }
 
+function updateChatHeaderName() {
+    const userName = getUserDisplayName(selectedUser) || 'No user selected';
+    const chatUsername = document.getElementById('chat-username');
+    const collapseUsername = document.getElementById('chat-collapse-username');
+    const chatUserAvatar = document.getElementById('chat-user-avatar');
+    const avatarUrl = resolveUserAvatarUrl(selectedUser);
 
-function selectUser(user) {
-  selectedUser = user;
-  console.log('Selected user:', selectedUser); // Confirm user selection
-  const chatModal = document.getElementById('chat-modal');
-  const chatUsername = document.getElementById('modal-chat-username');
-  const chatMessages = document.getElementById('modal-chat-messages');
+    if (chatUsername) {
+        chatUsername.innerText = userName;
+    }
 
-  chatUsername.innerText = `Chat with ${user.username}`;
-  chatMessages.innerHTML = ''; // Clear previous messages
-  chatModal.style.display = 'block';
-  console.log('selectUSER  function called');
+    if (collapseUsername) {
+        collapseUsername.innerText = userName;
+    }
+
+    if (chatUserAvatar) {
+        if (avatarUrl) {
+            chatUserAvatar.src = avatarUrl;
+            chatUserAvatar.classList.remove('hidden');
+        } else {
+            chatUserAvatar.removeAttribute('src');
+            chatUserAvatar.classList.add('hidden');
+        }
+    }
+}
+
+function getSelectedChatUser() {
+    const selectedUserId = normalizeObjectId(selectedUser?._id);
+    if (!selectedUserId) return null;
+
+    const refreshedSelectedUser = (Array.isArray(currentUsers) ? currentUsers : []).find((user) => (
+        normalizeObjectId(user?._id) === selectedUserId
+    ));
+
+    return refreshedSelectedUser || selectedUser;
+}
+
+function handleChatUserProfileTriggerKeydown(event) {
+    if (!event) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    openSelectedChatUserProfile(event);
+}
+
+function openSelectedChatUserProfile(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const user = getSelectedChatUser();
+    if (!user) {
+        alert('Select a user from chat first.');
+        return;
+    }
+
+    const modal = document.getElementById('chat-user-profile-modal');
+    const image = document.getElementById('chat-user-profile-image');
+    const fallback = document.getElementById('chat-user-profile-fallback');
+    const name = document.getElementById('chat-user-profile-name');
+    const username = document.getElementById('chat-user-profile-username');
+    const email = document.getElementById('chat-user-profile-email');
+    const contact = document.getElementById('chat-user-profile-contact');
+    const interest = document.getElementById('chat-user-profile-interest');
+    const status = document.getElementById('chat-user-profile-status');
+
+    if (!modal || !name || !username || !email || !contact || !interest || !status || !image || !fallback) {
+        return;
+    }
+
+    const avatarUrl = resolveUserAvatarUrl(user);
+    name.textContent = String(user.fullName || user.username || 'Unknown');
+    username.textContent = String(user.username || 'Unknown');
+    email.textContent = String(user.email || 'Not provided');
+    contact.textContent = String(user.contactNumber || 'Not provided');
+    interest.textContent = String(user.interest || 'Not provided');
+    status.textContent = user.isOnline ? 'Online' : 'Offline';
+
+    if (avatarUrl) {
+        image.src = avatarUrl;
+        image.classList.remove('hidden');
+        fallback.classList.add('hidden');
+    } else {
+        image.removeAttribute('src');
+        image.classList.add('hidden');
+        fallback.classList.remove('hidden');
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeChatUserProfileModal() {
+    const modal = document.getElementById('chat-user-profile-modal');
+    if (!modal) return;
+    modal.style.display = 'none';
 }
 
 function openChat(user) {
     selectedUser = user; // Set the selected user for the chat
     console.log('Selected user for chat:', selectedUser);
+    clearUnreadForUser(user?._id);
 
-    // Update the chat modal title
-    const chatUsername = document.getElementById('chat-username');
-    if (chatUsername) {
-        chatUsername.innerText = user.username;
-    }
+    updateChatHeaderName();
 
     const chat = document.getElementById('chat');
     if (chat) {
@@ -657,7 +3196,7 @@ function openChat(user) {
     console.log('Chat history fetched.');
 
     // Show the chat modal
-    
+    const chatModal = document.getElementById('chat');
     const chatModalContainer = document.getElementById('chat-modal-container');
     if (chatModal) {
         chatModal.style.display = 'block';
@@ -694,18 +3233,17 @@ async function fetchChatHistory(user) {
         chatMessages.innerHTML = ''; // Clear previous messages
 
         messages.forEach((message) => {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('chat-bubble');
-
             // Determine if the message is sent or received
-            if (message.sender === getUserIdFromToken(token)) {
-                messageElement.classList.add('sent'); // Add 'sent' class for user's own messages
-            } else {
-                messageElement.classList.add('received'); // Add 'received' class for other messages
-            }
-
-            messageElement.innerText = message.content;
-            chatMessages.appendChild(messageElement);
+            const isSent = normalizeObjectId(message.sender) === normalizeObjectId(getUserIdFromToken(token));
+            appendChatMessage(message.content, {
+                isSent,
+                avatarName: isSent ? 'You' : getUserDisplayName(selectedUser),
+                avatarUrl: isSent ? resolveUserAvatarUrl(currentUserProfile) : resolveUserAvatarUrl(selectedUser),
+                messageType: message.messageType,
+                mediaUrl: message.mediaUrl,
+                mediaName: message.mediaName,
+                allowDownload: !!message.allowDownload,
+            });
         });
 
         // Auto-scroll to the bottom of chat history
@@ -718,9 +3256,10 @@ async function fetchChatHistory(user) {
 
 function minimiseChat() {
     const chat = document.getElementById('chat');
+    if (!chat) return;
+
     const minimiseButton = document.getElementById('minimise-chat');
     const collapseSummary = document.getElementById('chat-collapse-summary');
-    const chatUsername = document.getElementById('chat-username');
     const isCollapsed = chat.classList.toggle('collapsed');
 
     if (minimiseButton) {
@@ -735,22 +3274,30 @@ function minimiseChat() {
         collapseSummary.classList.toggle('hidden', !isCollapsed);
     }
 
-    if (chatUsername) {
-        const userName = selectedUser?.username || 'No user selected';
-        if (isCollapsed) {
-            chatUsername.parentElement.textContent = `Chat with ${userName}`;
-        } else {
-            chatUsername.parentElement.innerHTML = `Chat with <strong id="chat-username">${userName}</strong>`;
-        }
-    }
+    updateChatHeaderName();
 }
 
 
 function closeChatModal() {
-    
+    const chatModal = document.getElementById('chat');
     const chatModalContainer = document.getElementById('chat-modal-container');
-    const chatMessages = document.getElementById('modal-chat-messages');
-    const chatInput = document.getElementById('modal-chat-input');
+    const chatMessages = document.getElementById('chat-messages-container');
+    const chatInput = document.getElementById('chat-input');
+
+    if (chatModal) {
+        chatModal.style.display = 'none';
+        chatModal.classList.add('hidden');
+        chatModal.classList.remove('collapsed');
+    }
+
+    const collapseButton = document.getElementById('collapse-chat');
+    if (collapseButton) {
+        const icon = collapseButton.querySelector('.window-icon');
+        if (icon) {
+            icon.classList.add('window-icon-minimize');
+            icon.classList.remove('window-icon-expand');
+        }
+    }
 
     // Hide the chat modal
     if(chatModalContainer){
@@ -766,8 +3313,12 @@ function closeChatModal() {
             console.error('Chat input not found');
         }
 
+    closeChatEmojiPicker();
+    clearPendingChatMedia();
+
     // Deselect the user
     selectedUser = null; 
+    updateChatHeaderName();
     console.log('closeChatModal function called, chat modal closed');
 }
 
@@ -775,6 +3326,9 @@ function toggleChat() {
     const chat = document.getElementById("chat");
     if (chat.classList.contains("hidden")) {
         chat.classList.remove("hidden");
+        if (selectedUser?._id) {
+            clearUnreadForUser(selectedUser._id);
+        }
     } else {
         chat.classList.add("hidden");
     }
@@ -783,15 +3337,53 @@ function toggleChat() {
 async function sendChatMessage() {
     const chatInput = document.getElementById('chat-input');
     const messageContent = chatInput.value.trim();
+    const hasPendingMedia = !!pendingChatMediaFile;
 
-    if (!selectedUser || !messageContent) {
-        alert('Select a user and type a message.');
+    if (!selectedUser || (!messageContent && !hasPendingMedia)) {
+        alert('Select a user and type a message or attach a media file.');
         return;
     }
 
     try {
         console.log('Sending message to:', selectedUser._id);  // Log receiver ID
         console.log('Message content:', messageContent);       // Log message content
+
+        if (hasPendingMedia) {
+            const allowDownload = window.confirm('Allow receiver to download this file?');
+            const formData = new FormData();
+            formData.append('receiver', selectedUser._id);
+            formData.append('content', messageContent);
+            formData.append('file', pendingChatMediaFile);
+            formData.append('allowDownload', allowDownload ? 'true' : 'false');
+
+            const mediaResponse = await fetch('http://localhost:5000/messages/media', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            const mediaData = await mediaResponse.json();
+            if (!mediaResponse.ok) {
+                throw new Error(mediaData.message || 'Failed to send media message');
+            }
+
+            const savedMessage = mediaData.data || {};
+            appendChatMessage(savedMessage.content || '', {
+                isSent: true,
+                avatarName: 'You',
+                avatarUrl: resolveUserAvatarUrl(currentUserProfile),
+                messageType: savedMessage.messageType,
+                mediaUrl: savedMessage.mediaUrl,
+                mediaName: savedMessage.mediaName,
+                allowDownload: !!savedMessage.allowDownload,
+            });
+
+            chatInput.value = '';
+            clearPendingChatMedia();
+            return;
+        }
 
         const response = await fetch('http://localhost:5000/messages', {
             method: 'POST',
@@ -815,11 +3407,12 @@ async function sendChatMessage() {
         console.log('Message saved:', responseData.data);
 
         // Add the message to the sender's chat window
-        const chatMessages = document.getElementById('chat-messages-container');
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('chat-bubble', 'sent');
-        messageElement.innerText = messageContent;
-        chatMessages.appendChild(messageElement);
+        appendChatMessage(messageContent, {
+            isSent: true,
+            avatarName: 'You',
+            avatarUrl: resolveUserAvatarUrl(currentUserProfile),
+            messageType: 'text',
+        });
         // Clear the input field
         chatInput.value = '';
         // Notify the chat button
@@ -829,6 +3422,16 @@ async function sendChatMessage() {
         alert('Failed to send message. Please try again.');
     }
 }
+
+function normalizeObjectId(value) {
+    if (!value) return '';
+    if (typeof value === 'object') {
+        if (value.$oid) return String(value.$oid);
+        if (value._id) return String(value._id);
+    }
+    return String(value);
+}
+
 async function fetchProfiles() {
     try {
         const response = await fetch('http://localhost:5000/profiles/profiles', {
@@ -870,36 +3473,70 @@ function filterProfiles() {
 }
 
 function renderProfiles(profiles) {
-    const profilesList = document.getElementById('profiles-list');
+    const profilesList = document.querySelector('#profiles-list .profiles-grid');
     if (!profilesList) {
-        console.error('Element with ID "profiles-list" not found in the DOM.');
+        console.error('Element with ID "profiles-list" .profiles-grid not found in the DOM.');
         return;
     }
 
     const safeProfiles = Array.isArray(profiles) ? profiles : [];
+    const orderedProfiles = [...safeProfiles].sort((a, b) => {
+        const aUrl = resolveProfilePageUrl(a);
+        const bUrl = resolveProfilePageUrl(b);
+        const aIsProdbyenne = aUrl === '/profiles/prodbyenne/index.html';
+        const bIsProdbyenne = bUrl === '/profiles/prodbyenne/index.html';
+
+        if (aIsProdbyenne === bIsProdbyenne) return 0;
+        return aIsProdbyenne ? -1 : 1;
+    });
     profilesList.innerHTML = '';
+
+    // Add or remove single-profile class
+    if (safeProfiles.length === 1) {
+        profilesList.classList.add('single-profile');
+    } else {
+        profilesList.classList.remove('single-profile');
+    }
 
     if (safeProfiles.length === 0) {
         profilesList.innerHTML = '<div class="profile-empty">No profiles match your filter.</div>';
+        syncScrollbars();
         return;
     }
 
-    safeProfiles.forEach((profile) => {
+    orderedProfiles.forEach((profile) => {
+        const rawProfileName = String(profile.profileName || 'Profile').trim();
+        const displayProfileName = /^about\s+this\s+page$/i.test(rawProfileName)
+            ? 'About'
+            : (rawProfileName || 'Profile');
         const imageUrl = profile.imageUrl
             ? `http://localhost:5000/${profile.imageUrl}` // Use correct path
             : 'default-placeholder.png'; // Default image if no profile picture
+        const profilePageUrl = resolveProfilePageUrl(profile);
+        const isProdbyenneProfile = profilePageUrl === '/profiles/prodbyenne/index.html';
+        const canAdminEditProfile = currentUserRole === 'admin' && !isProdbyenneProfile;
+        const primaryButtonAction = profilePageUrl
+            ? 'openProfilePageOverlayFromButton(this)'
+            : 'expandProfile(this)';
+        const overlayButtonMarkup = profilePageUrl
+            ? `<button class="profile-overlay-open-button" onclick="openProfilePageOverlayFromButton(this)" data-overlay-url="${profilePageUrl}">Open ProdbyENNE</button>`
+            : '';
+        const adminEditMarkup = canAdminEditProfile
+            ? `<button class="profile-admin-edit-button" onclick="openProfileAdminEditFromButton(this)">Update Info</button>`
+            : '';
 
         const profileElement = document.createElement('div');
         profileElement.className = 'profile';
+        profileElement.dataset.profileName = displayProfileName;
         profileElement.innerHTML = `
-            <h3>${profile.profileName}</h3>
-            <p>${profile.description}</p>
+            <h3 class="profile-title">${displayProfileName}</h3>
             <img src="${imageUrl}" alt="Profile Picture" />
-            <div class="profile-details" style="display: none;">
-                <p><strong>Type:</strong> ${profile.type || 'Personal'}</p>
-                <p><strong>Description:</strong> ${profile.description || 'No details provided.'}</p>
+            <div class="profile-details">
+                <p class="profile-brief-field"><strong>About:</strong> ${profile.description || 'No about text provided yet.'}</p>
+                ${overlayButtonMarkup}
+                ${adminEditMarkup}
             </div>
-            <button class="profile-expand-button" onclick="expandProfile(this)" style="--clr: #7808d0">
+            <button class="profile-expand-button" onclick="${primaryButtonAction}" data-overlay-url="${profilePageUrl || ''}" style="--clr: #7808d0">
             <span class="button__icon-wrapper">
                 <svg
                 viewBox="0 0 14 15"
@@ -927,7 +3564,7 @@ function renderProfiles(profiles) {
                 ></path>
                 </svg>
             </span>
-            <span class="button-text">Expand Profile</span>
+            <span class="button-text">Open</span>
             </button>
 
             <!-- Hidden Modal for Expanded Profile -->
@@ -941,8 +3578,281 @@ function renderProfiles(profiles) {
             </div>
 
         `;
+
+        if (canAdminEditProfile) {
+            const adminEditButton = profileElement.querySelector('.profile-admin-edit-button');
+            if (adminEditButton) {
+                adminEditButton.dataset.profileId = profile._id || profile.id || '';
+                adminEditButton.dataset.profileName = profile.profileName || '';
+                adminEditButton.dataset.description = profile.description || '';
+                adminEditButton.dataset.type = profile.type || 'personal';
+                adminEditButton.dataset.profilePageUrl = profilePageUrl || '';
+            }
+        }
+
         profilesList.appendChild(profileElement);
     });
+    
+    // Sync scrollbars after rendering
+    syncScrollbars();
+}
+
+function sanitizeProfilePageUrl(profilePageUrl) {
+    if (!profilePageUrl || typeof profilePageUrl !== 'string') {
+        return '';
+    }
+
+    const trimmedUrl = profilePageUrl.trim();
+    if (!trimmedUrl) {
+        return '';
+    }
+
+    const isAllowedUrl = trimmedUrl.startsWith('/') || trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://');
+    return isAllowedUrl ? trimmedUrl : '';
+}
+
+function resolveProfilePageUrl(profile) {
+    const explicitUrl = sanitizeProfilePageUrl(profile?.profilePageUrl);
+    if (explicitUrl) {
+        return explicitUrl;
+    }
+
+    const normalizedName = (profile?.profileName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (normalizedName.includes('prodby') && normalizedName.includes('enne')) {
+        return '/profiles/prodbyenne/index.html';
+    }
+
+    return '';
+}
+
+function ensureProfilePageOverlay() {
+    let overlay = document.getElementById('profile-page-overlay');
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'profile-page-overlay';
+    overlay.className = 'profile-page-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML = `
+        <div class="profile-page-overlay-backdrop" onclick="closeProfilePageOverlay()"></div>
+        <div class="profile-page-overlay-window" role="dialog" aria-modal="false" aria-label="Embedded profile page">
+            <div class="profile-page-overlay-header">
+                <span class="profile-page-overlay-title">ProdbyENNE</span>
+                <button class="profile-page-overlay-close" onclick="closeProfilePageOverlay()" aria-label="Close embedded page">Close</button>
+            </div>
+            <div class="profile-page-overlay-body is-loading">
+                <div class="profile-page-overlay-loading" aria-hidden="true">
+                    <span class="profile-page-overlay-spinner"></span>
+                    <span class="profile-page-overlay-loading-text">Loading embedded page...</span>
+                </div>
+                <iframe
+                    id="profile-page-overlay-iframe"
+                    class="profile-page-overlay-iframe"
+                    src="about:blank"
+                    title="Embedded profile page viewer"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                ></iframe>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function openProfilePageOverlayFromButton(button) {
+    const overlayUrl = sanitizeProfilePageUrl(button?.dataset?.overlayUrl || '');
+    if (!overlayUrl) {
+        alert('No embedded page URL is configured for this profile yet.');
+        return;
+    }
+
+    openProfilePageOverlay(overlayUrl);
+}
+
+function openProfilePageOverlay(profilePageUrl) {
+    const safeUrl = sanitizeProfilePageUrl(profilePageUrl);
+    if (!safeUrl) return;
+
+    const overlay = ensureProfilePageOverlay();
+    const overlayBody = overlay.querySelector('.profile-page-overlay-body');
+    const iframe = overlay.querySelector('#profile-page-overlay-iframe');
+    const loadingText = overlay.querySelector('.profile-page-overlay-loading-text');
+    if (!overlayBody || !iframe) return;
+
+    if (!iframe.dataset.loaderBound) {
+        iframe.addEventListener('load', () => {
+            if (iframe._overlayLoadTimeout) {
+                clearTimeout(iframe._overlayLoadTimeout);
+                iframe._overlayLoadTimeout = null;
+            }
+            overlayBody.classList.remove('is-loading');
+            overlayBody.classList.remove('is-timeout');
+            iframe.dataset.loaded = 'true';
+        });
+        iframe.dataset.loaderBound = 'true';
+    }
+
+    if (iframe._overlayLoadTimeout) {
+        clearTimeout(iframe._overlayLoadTimeout);
+        iframe._overlayLoadTimeout = null;
+    }
+
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    overlayBody.classList.add('is-loading');
+    overlayBody.classList.remove('is-timeout');
+
+    if (loadingText) {
+        loadingText.textContent = 'Loading embedded page...';
+    }
+
+    iframe.dataset.loaded = 'false';
+    iframe.src = safeUrl;
+
+    iframe._overlayLoadTimeout = setTimeout(() => {
+        if (iframe.dataset.loaded === 'true') return;
+        overlayBody.classList.add('is-timeout');
+        if (loadingText) {
+            loadingText.textContent = 'This page is taking longer than expected. Check the URL and try reopening this overlay.';
+        }
+    }, 8000);
+}
+
+function closeProfilePageOverlay() {
+    const overlay = document.getElementById('profile-page-overlay');
+    if (!overlay) return;
+
+    const overlayBody = overlay.querySelector('.profile-page-overlay-body');
+    const iframe = overlay.querySelector('#profile-page-overlay-iframe');
+    const loadingText = overlay.querySelector('.profile-page-overlay-loading-text');
+
+    if (iframe && iframe._overlayLoadTimeout) {
+        clearTimeout(iframe._overlayLoadTimeout);
+        iframe._overlayLoadTimeout = null;
+    }
+
+    if (overlayBody) {
+        overlayBody.classList.remove('is-loading');
+        overlayBody.classList.remove('is-timeout');
+    }
+
+    if (loadingText) {
+        loadingText.textContent = 'Loading embedded page...';
+    }
+
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+}
+
+function openProfileAdminEditFromButton(button) {
+    if (currentUserRole !== 'admin') {
+        alert('Only admins can update profile information.');
+        return;
+    }
+
+    const profileId = button?.dataset?.profileId || '';
+    if (!profileId) {
+        alert('Unable to find this profile record.');
+        return;
+    }
+
+    const currentName = button?.dataset?.profileName || '';
+    const currentDescription = button?.dataset?.description || '';
+    const currentType = button?.dataset?.type || 'personal';
+    const currentPageUrl = button?.dataset?.profilePageUrl || '';
+
+    const modal = document.getElementById('update-profile-modal');
+    const idField = document.getElementById('update-profile-id');
+    const nameField = document.getElementById('update-profile-name');
+    const descriptionField = document.getElementById('update-profile-description');
+    const typeField = document.getElementById('update-profile-type');
+    const pageUrlField = document.getElementById('update-profile-page-url');
+
+    if (!modal || !idField || !nameField || !descriptionField || !typeField || !pageUrlField) {
+        alert('Update form is unavailable right now.');
+        return;
+    }
+
+    idField.value = profileId;
+    nameField.value = currentName;
+    descriptionField.value = currentDescription;
+    typeField.value = currentType || 'personal';
+    pageUrlField.value = currentPageUrl;
+
+    modal.style.display = 'flex';
+}
+
+function closeUpdateProfileModal() {
+    const modal = document.getElementById('update-profile-modal');
+    if (!modal) return;
+    modal.style.display = 'none';
+}
+
+async function submitProfileAdminUpdate() {
+    if (currentUserRole !== 'admin') {
+        alert('Only admins can update profile information.');
+        return;
+    }
+
+    const profileId = document.getElementById('update-profile-id')?.value || '';
+    const nameField = document.getElementById('update-profile-name');
+    const descriptionField = document.getElementById('update-profile-description');
+    const typeField = document.getElementById('update-profile-type');
+    const pageUrlField = document.getElementById('update-profile-page-url');
+
+    if (!profileId || !nameField || !descriptionField || !typeField || !pageUrlField) {
+        alert('Unable to submit profile update right now.');
+        return;
+    }
+
+    const trimmedName = nameField.value.trim();
+    if (!trimmedName) {
+        alert('Profile name is required.');
+        return;
+    }
+
+    const nextType = typeField.value.trim().toLowerCase() || 'personal';
+    const nextPageUrl = pageUrlField.value.trim();
+
+    try {
+        const response = await fetch(`http://localhost:5000/profiles/profiles/${profileId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                profileName: trimmedName,
+                description: descriptionField.value.trim(),
+                type: nextType,
+                profilePageUrl: nextPageUrl,
+            }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload.message || 'Failed to update profile info');
+        }
+
+        alert('Profile information updated.');
+        closeUpdateProfileModal();
+        await fetchProfiles();
+    } catch (error) {
+        console.error('Error updating profile info:', error);
+        alert(error.message || 'Unable to update profile info right now.');
+    }
+}
+
+function updateExpandedProfileTitle(profile, isExpanded) {
+    if (!profile) return;
+
+    const titleElement = profile.querySelector('.profile-title');
+    const baseName = profile.dataset.profileName || 'Profile';
+    if (!titleElement) return;
+
+    titleElement.textContent = baseName;
 }
 
 
@@ -950,25 +3860,211 @@ function expandProfile(button) {
     const profile = button.closest('.profile');
     if (!profile) return;
 
+    ensureProfileOverlay();
+
+    const shell = document.querySelector('.profile-view-shell');
+    const profilesGrid = profile.closest('.profiles-grid');
     const details = profile.querySelector('.profile-details');
     const buttonText = button.querySelector('.button-text');
+    const overlay = document.getElementById('profile-focus-overlay');
 
     if (!details) return;
 
-    const isHidden = details.style.display === 'none' || details.style.display === '';
-    details.style.display = isHidden ? 'block' : 'none';
-    details.classList.toggle('visible', isHidden);
+    const isOpening = !profile.classList.contains('profile-expanded');
+
+    // Keep one expanded profile active at a time.
+    document.querySelectorAll('.profile.profile-expanded').forEach((openProfile) => {
+        if (openProfile === profile) return;
+        openProfile.classList.remove('profile-expanded');
+
+        const openDetails = openProfile.querySelector('.profile-details');
+        if (openDetails) {
+            openDetails.classList.remove('visible');
+        }
+
+        const openButtonText = openProfile.querySelector('.button-text');
+        if (openButtonText) {
+            openButtonText.textContent = 'Open';
+        }
+
+        updateExpandedProfileTitle(openProfile, false);
+    });
+
+    profile.classList.toggle('profile-expanded', isOpening);
+    details.classList.toggle('visible', isOpening);
+
+    if (shell) {
+        const hasExpanded = !!document.querySelector('.profile.profile-expanded');
+        shell.classList.toggle('shell-expanded', hasExpanded);
+    }
+
+    if (profilesGrid) {
+        const hasExpanded = !!profilesGrid.querySelector('.profile.profile-expanded');
+        profilesGrid.classList.toggle('has-expanded-profile', hasExpanded);
+    }
+
+    if (overlay) {
+        overlay.classList.toggle('active', !!document.querySelector('.profile.profile-expanded'));
+    }
+
+    document.body.classList.toggle('profile-focus-active', !!document.querySelector('.profile.profile-expanded'));
 
     if (buttonText) {
-        buttonText.textContent = isHidden ? 'Collapse Profile' : 'Expand Profile';
+        buttonText.textContent = isOpening ? 'Close' : 'Open';
     }
+
+    updateExpandedProfileTitle(profile, isOpening);
 }
+
+function minimizeExpandedProfile() {
+    const expandedProfile = document.querySelector('.profile.profile-expanded');
+    const overlay = document.getElementById('profile-focus-overlay');
+    const shell = document.querySelector('.profile-view-shell');
+    const profilesGrid = document.querySelector('#profiles-list .profiles-grid');
+
+    if (!expandedProfile) return;
+
+    expandedProfile.classList.remove('profile-expanded');
+    const details = expandedProfile.querySelector('.profile-details');
+    const buttonText = expandedProfile.querySelector('.button-text');
+
+    if (details) {
+        details.classList.remove('visible');
+    }
+
+    if (buttonText) {
+        buttonText.textContent = 'Open';
+    }
+
+    updateExpandedProfileTitle(expandedProfile, false);
+
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+
+    if (shell) {
+        shell.classList.remove('shell-expanded');
+    }
+
+    if (profilesGrid) {
+        profilesGrid.classList.remove('has-expanded-profile');
+    }
+
+    document.body.classList.remove('profile-focus-active');
+}
+
+function ensureProfileOverlay() {
+    let overlay = document.getElementById('profile-focus-overlay');
+    if (overlay) return;
+
+    const shell = document.querySelector('.profile-view-shell');
+    if (!shell) return;
+
+    overlay = document.createElement('div');
+    overlay.id = 'profile-focus-overlay';
+    overlay.className = 'profile-focus-overlay';
+    overlay.addEventListener('click', minimizeExpandedProfile);
+    shell.appendChild(overlay);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        const chatUserProfileModal = document.getElementById('chat-user-profile-modal');
+        if (chatUserProfileModal && chatUserProfileModal.style.display !== 'none') {
+            closeChatUserProfileModal();
+            return;
+        }
+
+        const avatarPreview = document.getElementById('user-avatar-preview');
+        if (avatarPreview && avatarPreview.style.display !== 'none') {
+            closeUserAvatarPreview();
+            return;
+        }
+
+        const profileSidebar = document.getElementById('profile-sidebar');
+        if (profileSidebar && profileSidebar.style.display !== 'none') {
+            closeProfileSidebar();
+            return;
+        }
+
+        const bookingsModal = document.getElementById('bookings-modal');
+        if (bookingsModal && bookingsModal.style.display !== 'none') {
+            closeBookingsModal();
+            return;
+        }
+
+        const pageOverlay = document.getElementById('profile-page-overlay');
+        if (pageOverlay && pageOverlay.classList.contains('is-open')) {
+            closeProfilePageOverlay();
+            return;
+        }
+        minimizeExpandedProfile();
+    }
+});
+
+document.addEventListener('click', (event) => {
+    const chatUserProfileModal = document.getElementById('chat-user-profile-modal');
+    if (chatUserProfileModal && chatUserProfileModal.style.display !== 'none' && event.target === chatUserProfileModal) {
+        closeChatUserProfileModal();
+    }
+
+    const modal = document.getElementById('bookings-modal');
+    if (modal && modal.style.display !== 'none' && event.target === modal) {
+        closeBookingsModal();
+    }
+
+    const avatarPreview = document.getElementById('user-avatar-preview');
+    if (!avatarPreview || avatarPreview.style.display === 'none') return;
+
+    const clickedInsidePreview = event.target.closest('#user-avatar-preview');
+    const clickedAvatarChip = event.target.closest('#user-avatar-chip');
+    if (!clickedInsidePreview && !clickedAvatarChip) {
+        closeUserAvatarPreview();
+    }
+});
+
+// Sync scrollbar function to keep top and bottom scrollbars in sync
+function syncScrollbars() {
+    const syncScroller = document.getElementById('scrollbar-sync');
+    const profileRing = document.getElementById('profiles-list');
+    const profilesGrid = document.querySelector('#profiles-list .profiles-grid');
+    
+    if (!syncScroller || !profileRing || !profilesGrid) return;
+    
+    // Set the width of the sync scroller content to match the profiles grid
+    const syncContent = syncScroller.querySelector('.scrollbar-sync-content') || document.createElement('div');
+    syncContent.className = 'scrollbar-sync-content';
+    syncContent.style.width = profilesGrid.scrollWidth + 'px';
+    
+    if (!syncScroller.contains(syncContent)) {
+        syncScroller.innerHTML = '';
+        syncScroller.appendChild(syncContent);
+    }
+    
+    // Sync scroll events
+    profileRing.addEventListener('scroll', () => {
+        syncScroller.scrollLeft = profileRing.scrollLeft;
+    });
+    
+    syncScroller.addEventListener('scroll', () => {
+        profileRing.scrollLeft = syncScroller.scrollLeft;
+    });
+}
+
+// Initialize scroll sync when page loads
+document.addEventListener('DOMContentLoaded', syncScrollbars);
 
 
 async function addProfile() {
+    if (currentUserRole !== 'admin') {
+        alert('Only admins can add profiles.');
+        return;
+    }
+
     const profileName = document.getElementById('profile-name').value; // Use profileName instead of name
     const description = document.getElementById('profile-description').value;
     const type = document.getElementById('profile-type').value;
+    const profilePageUrl = document.getElementById('profile-page-url')?.value?.trim() || '';
     const profilePictureInput = document.getElementById('profile-picture');
     const profilePicture = profilePictureInput.files[0];
 
@@ -981,6 +4077,7 @@ async function addProfile() {
     formData.append('profileName', profileName); // Use profileName
     formData.append('description', description);
     formData.append('type', type);
+    formData.append('profilePageUrl', profilePageUrl);
     if (profilePicture) {
         formData.append('profilePicture', profilePicture);
     }
@@ -1005,6 +4102,10 @@ async function addProfile() {
 }
 // Function to open the Add Profile modal
 function openAddProfileModal() {
+    if (currentUserRole !== 'admin') {
+        alert('Only admins can add profiles.');
+        return;
+    }
   const modal = document.getElementById('add-profile-modal');
   modal.style.display = 'flex'; // Display the modal as a flexbox
 }
@@ -1013,6 +4114,268 @@ function openAddProfileModal() {
 function closeAddProfileModal() {
   const modal = document.getElementById('add-profile-modal');
   modal.style.display = 'none'; // Hide the modal
+}
+
+function formatBookingDateTime(value) {
+    const date = value ? new Date(value) : null;
+    if (!date || Number.isNaN(date.getTime())) {
+        return 'Not set';
+    }
+
+    return date.toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function getBookingWhoLabel(booking) {
+    return booking.requesterUsername || booking.name || booking.email || 'Unknown';
+}
+
+function getBookingStatusLabel(booking) {
+    const status = String(booking?.status || 'pending').toLowerCase();
+    if (status === 'accepted') return 'Accepted';
+    if (status === 'rejected') return 'Rejected';
+    return 'Pending';
+}
+
+async function updateBookingStatus(bookingId, nextStatus) {
+    if (!token || currentUserRole !== 'admin') return;
+
+    const response = await fetch(`http://localhost:5000/prodbyenne/bookings/${bookingId}/status`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: nextStatus }),
+    });
+
+    if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message || 'Failed to update booking status');
+    }
+
+    return response.json();
+}
+
+async function acceptBooking(bookingId) {
+    try {
+        await updateBookingStatus(bookingId, 'accepted');
+    } catch (error) {
+        console.error('Error accepting booking:', error);
+        alert(error.message || 'Unable to accept booking right now.');
+    }
+}
+
+async function rejectBooking(bookingId) {
+    try {
+        await updateBookingStatus(bookingId, 'rejected');
+    } catch (error) {
+        console.error('Error rejecting booking:', error);
+        alert(error.message || 'Unable to reject booking right now.');
+    }
+}
+
+function populateBookingServiceFilter(bookings) {
+    const serviceSelect = document.getElementById('bookings-filter-service');
+    if (!serviceSelect) return;
+
+    const selectedService = serviceSelect.value;
+    const services = Array.from(new Set((bookings || [])
+        .map((booking) => String(booking?.service || '').trim())
+        .filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b));
+
+    serviceSelect.innerHTML = '<option value="">All services</option>';
+    services.forEach((service) => {
+        const option = document.createElement('option');
+        option.value = service;
+        option.textContent = service;
+        serviceSelect.appendChild(option);
+    });
+
+    if (selectedService && services.includes(selectedService)) {
+        serviceSelect.value = selectedService;
+    }
+}
+
+function renderBookingsList() {
+    const listElement = document.getElementById('bookings-list');
+    const whoFilter = (document.getElementById('bookings-filter-who')?.value || '').toLowerCase().trim();
+    const serviceFilter = document.getElementById('bookings-filter-service')?.value || '';
+    const sortBy = document.getElementById('bookings-sort')?.value || 'session-desc';
+
+    if (!listElement) return;
+
+    let filtered = Array.isArray(currentBookings) ? [...currentBookings] : [];
+
+    if (whoFilter) {
+        filtered = filtered.filter((booking) => {
+            const who = getBookingWhoLabel(booking).toLowerCase();
+            const email = String(booking?.email || '').toLowerCase();
+            const name = String(booking?.name || '').toLowerCase();
+            return who.includes(whoFilter) || email.includes(whoFilter) || name.includes(whoFilter);
+        });
+    }
+
+    if (serviceFilter) {
+        filtered = filtered.filter((booking) => String(booking?.service || '') === serviceFilter);
+    }
+
+    filtered.sort((a, b) => {
+        const sessionA = new Date(a?.sessionDateTime || 0).getTime();
+        const sessionB = new Date(b?.sessionDateTime || 0).getTime();
+        const whoA = getBookingWhoLabel(a).toLowerCase();
+        const whoB = getBookingWhoLabel(b).toLowerCase();
+        const serviceA = String(a?.service || '').toLowerCase();
+        const serviceB = String(b?.service || '').toLowerCase();
+
+        switch (sortBy) {
+            case 'session-asc':
+                return sessionA - sessionB;
+            case 'who-asc':
+                return whoA.localeCompare(whoB);
+            case 'who-desc':
+                return whoB.localeCompare(whoA);
+            case 'service-asc':
+                return serviceA.localeCompare(serviceB);
+            case 'service-desc':
+                return serviceB.localeCompare(serviceA);
+            case 'session-desc':
+            default:
+                return sessionB - sessionA;
+        }
+    });
+
+    if (!filtered.length) {
+        listElement.innerHTML = '<div class="bookings-empty">No bookings match your filters.</div>';
+        return;
+    }
+
+    listElement.innerHTML = filtered.map((booking) => {
+        const who = getBookingWhoLabel(booking);
+        const service = String(booking?.service || 'Not set');
+        const message = String(booking?.message || '');
+        const email = String(booking?.email || 'No email');
+        const status = String(booking?.status || 'pending').toLowerCase();
+        const isPending = status === 'pending';
+        const adminActions = currentUserRole === 'admin'
+            ? `
+                <div class="booking-item-actions">
+                    <button class="booking-action booking-action-accept" onclick="acceptBooking('${booking.id || booking._id}')" ${isPending ? '' : 'disabled'}>Accept</button>
+                    <button class="booking-action booking-action-reject" onclick="rejectBooking('${booking.id || booking._id}')" ${isPending ? '' : 'disabled'}>Reject</button>
+                </div>
+            `
+            : '';
+
+        return `
+            <article class="booking-item ${booking.read ? 'is-read' : 'is-unread'}">
+                <div class="booking-item-head">
+                    <span class="booking-item-who">${who}</span>
+                    <div class="booking-item-right">
+                        <span class="booking-item-status booking-item-status-${status}">${getBookingStatusLabel(booking)}</span>
+                        <span class="booking-item-service">${service}</span>
+                    </div>
+                </div>
+                <div class="booking-item-meta">
+                    <span><strong>Email:</strong> ${email}</span>
+                    <span><strong>Session:</strong> ${formatBookingDateTime(booking.sessionDateTime)}</span>
+                    <span><strong>Requested:</strong> ${formatBookingDateTime(booking.createdAt)}</span>
+                </div>
+                <p class="booking-item-message">${message}</p>
+                ${adminActions}
+            </article>
+        `;
+    }).join('');
+}
+
+async function fetchBookingsForModal() {
+    if (!token) {
+        currentBookings = [];
+        renderBookingsList();
+        return;
+    }
+
+    const endpoint = currentUserRole === 'admin'
+        ? 'http://localhost:5000/prodbyenne/bookings'
+        : 'http://localhost:5000/prodbyenne/bookings/my';
+
+    const response = await fetch(endpoint, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to load bookings');
+    }
+
+    const bookings = await response.json();
+    currentBookings = Array.isArray(bookings) ? bookings : [];
+    populateBookingServiceFilter(currentBookings);
+    updateBookingsNotificationBadge();
+    renderBookingsList();
+}
+
+async function refreshBookingsNotifications() {
+    if (!token) {
+        currentBookings = [];
+        updateBookingsNotificationBadge();
+        return;
+    }
+
+    const endpoint = currentUserRole === 'admin'
+        ? 'http://localhost:5000/prodbyenne/bookings'
+        : 'http://localhost:5000/prodbyenne/bookings/my';
+
+    const response = await fetch(endpoint, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to refresh booking notifications');
+    }
+
+    const bookings = await response.json();
+    currentBookings = Array.isArray(bookings) ? bookings : [];
+    updateBookingsNotificationBadge();
+}
+
+async function openBookingsModal() {
+    const modal = document.getElementById('bookings-modal');
+    const listElement = document.getElementById('bookings-list');
+    const whoFilter = document.getElementById('bookings-filter-who');
+    const sortSelect = document.getElementById('bookings-sort');
+    if (!modal || !listElement) return;
+
+    if (whoFilter) whoFilter.value = '';
+    if (sortSelect) sortSelect.value = 'session-desc';
+
+    listElement.innerHTML = '<div class="bookings-empty">Loading bookings...</div>';
+    modal.style.display = 'flex';
+    if (currentUserRole === 'admin') {
+        pendingBookingNotifications = 0;
+    }
+    updateBookingsNotificationBadge();
+
+    try {
+        await fetchBookingsForModal();
+    } catch (error) {
+        console.error('Error loading bookings:', error);
+        listElement.innerHTML = '<div class="bookings-empty">Unable to load bookings right now.</div>';
+    }
+}
+
+function closeBookingsModal() {
+    const modal = document.getElementById('bookings-modal');
+    if (!modal) return;
+    modal.style.display = 'none';
 }
 
 
