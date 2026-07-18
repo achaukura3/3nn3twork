@@ -3492,8 +3492,7 @@ function renderProfiles(profiles) {
             ? toAbsoluteUrl(profile.imageUrl)
             : 'default-placeholder.png'; // Default image if no profile picture
         const profilePageUrl = resolveProfilePageUrl(profile);
-        const isProdbyenneProfile = profilePageUrl === '/profiles/prodbyenne/index.html';
-        const canAdminEditProfile = currentUserRole === 'admin' && !isProdbyenneProfile;
+        const canAdminEditProfile = currentUserRole === 'admin';
         const primaryButtonAction = profilePageUrl
             ? 'openProfilePageOverlayFromButton(this)'
             : 'expandProfile(this)';
