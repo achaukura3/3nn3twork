@@ -313,7 +313,6 @@
             <div class="profile-sidebar-header">
                 <h3>My Profile</h3>
                 <div class="profile-sidebar-actions">
-                    <button class="profile-sidebar-minimize" onclick="toggleProfileSidebarMinimize()" aria-label="Minimize profile settings">—</button>
                     <button class="profile-sidebar-close" onclick="closeProfileSidebar()" aria-label="Close profile settings">✖</button>
                 </div>
             </div>
@@ -1505,34 +1504,6 @@ function closeProfileSidebarDeleteMode() {
     setProfileSidebarMode('summary');
 }
 
-function getProfileSidebarMinimizedStorageKey() {
-    const userId = getCurrentUserIdSafe();
-    if (!userId) return '';
-    return `profileSidebarMinimized:${userId}`;
-}
-
-function getStoredProfileSidebarMinimized() {
-    const key = getProfileSidebarMinimizedStorageKey();
-    if (!key) return false;
-
-    try {
-        return localStorage.getItem(key) === '1';
-    } catch (error) {
-        return false;
-    }
-}
-
-function setStoredProfileSidebarMinimized(isMinimized) {
-    const key = getProfileSidebarMinimizedStorageKey();
-    if (!key) return;
-
-    try {
-        localStorage.setItem(key, isMinimized ? '1' : '0');
-    } catch (error) {
-        // Ignore storage failures silently.
-    }
-}
-
 function getProfileSidebarOpenStorageKey() {
     const userId = getCurrentUserIdSafe();
     if (!userId) return '';
@@ -1565,15 +1536,7 @@ function applyStoredProfileSidebarMinimizedState() {
     const sidebar = document.getElementById('profile-sidebar');
     if (!sidebar) return;
 
-    sidebar.classList.toggle('is-minimized', getStoredProfileSidebarMinimized());
-}
-
-function toggleProfileSidebarMinimize() {
-    const sidebar = document.getElementById('profile-sidebar');
-    if (!sidebar) return;
-    const isNowMinimized = !sidebar.classList.contains('is-minimized');
-    sidebar.classList.toggle('is-minimized', isNowMinimized);
-    setStoredProfileSidebarMinimized(isNowMinimized);
+    sidebar.classList.remove('is-minimized');
 }
 
 async function fetchMyProfile() {
@@ -3720,12 +3683,15 @@ function openProfilePageOverlay(profilePageUrl) {
 
     overlay.classList.add('is-open');
     overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('prodbyenne-overlay-open');
     overlayBody.classList.add('is-loading');
     overlayBody.classList.remove('is-timeout');
 
     if (loadingText) {
         loadingText.textContent = 'Loading embedded page...';
     }
+
+    updateSiteMediaPlayerUI();
 
     iframe.dataset.loaded = 'false';
     iframe.src = safeUrl;
@@ -3761,8 +3727,11 @@ function closeProfilePageOverlay() {
         loadingText.textContent = 'Loading embedded page...';
     }
 
+    document.body.classList.remove('prodbyenne-overlay-open');
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden', 'true');
+
+    updateSiteMediaPlayerUI();
 }
 
 function openProfileAdminEditFromButton(button) {
