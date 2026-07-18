@@ -2174,24 +2174,46 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   #chat {
     left: 10px;
     right: 10px;
-    bottom: 10px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
     max-width: none;
     width: auto;
   }
 
   #chat.collapsed {
-    width: calc(100vw - 20px);
+    left: 10px;
+    right: 10px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    width: auto;
+    max-width: none;
   }
 
   .floating-tools {
     top: auto;
     bottom: 118px;
     left: 8px;
-    right: 8px;
+    right: auto;
+    width: calc(100vw - 16px);
     max-width: calc(100vw - 16px);
     padding: 8px;
     gap: 8px;
     border-radius: 18px;
+  }
+
+  .floating-tools.is-collapsed {
+    width: auto;
+    max-width: max-content;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .floating-tools.is-collapsed .floating-tools-handle {
+    min-height: 34px;
+    padding: 4px;
+    gap: 6px;
+  }
+
+  .floating-tools.is-collapsed .floating-tools-title {
+    font-size: 14px;
   }
 
   .floating-tools-items {
@@ -2203,6 +2225,10 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
     overflow-y: hidden;
     padding-bottom: 2px;
     scrollbar-width: none;
+  }
+
+  .floating-tools:not(.is-collapsed) .floating-tools-items {
+    max-height: 64px;
   }
 
   .floating-tools-items::-webkit-scrollbar {
