@@ -3896,6 +3896,15 @@ function ensureProfilePageOverlay() {
         </div>
     `;
 
+    if (!overlay.dataset.closeBound) {
+        overlay.addEventListener('pointerdown', (event) => {
+            const clickedBackdrop = event.target.closest('.profile-page-overlay-backdrop');
+            if (!clickedBackdrop) return;
+            closeProfilePageOverlay();
+        });
+        overlay.dataset.closeBound = '1';
+    }
+
     document.body.appendChild(overlay);
     return overlay;
 }
@@ -3993,7 +4002,11 @@ function closeProfilePageOverlay() {
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden', 'true');
 
-    syncProfileFocusLockState();
+    // Wait one frame so mobile browsers finish releasing overlay hit-testing before we resync scroll locks.
+    requestAnimationFrame(() => {
+        syncProfileFocusLockState();
+        syncScrollbars();
+    });
 
     updateSiteMediaPlayerUI();
 }
