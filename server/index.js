@@ -92,6 +92,16 @@ if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI && !proces
 mongoose.connect(mongoUri)
   .then(() => {
     console.log('MongoDB connected');
+    console.log(`MongoDB target host: ${mongoose.connection.host || 'unknown'}`);
+    console.log(`MongoDB target database: ${mongoose.connection.name || 'unknown'}`);
+
+    User.countDocuments({})
+      .then((count) => {
+        console.log(`MongoDB users collection document count: ${count}`);
+      })
+      .catch((countError) => {
+        console.warn(`Unable to count users collection: ${countError.message}`);
+      });
   })
   .catch((error) => {
     console.error(`MongoDB connection error: ${error.message}`);
