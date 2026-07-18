@@ -577,6 +577,7 @@
             toggleBtn.setAttribute('aria-pressed', String(isLeftPreset));
             toggleBtn.setAttribute('aria-label', isLeftPreset ? 'Dock player at center bottom' : 'Dock player at left bottom');
             toggleBtn.title = isLeftPreset ? 'Player docked left. Tap to center.' : 'Player centered. Tap to dock left.';
+            toggleBtn.textContent = isLeftPreset ? '◧' : '◯';
         }
     }
 
@@ -681,7 +682,7 @@
                 <button type="button" id="site-media-toggle" class="site-media-btn" aria-label="Play or pause">▶</button>
                 <button type="button" id="site-media-next" class="site-media-btn" aria-label="Next song">⏭</button>
                 <button type="button" id="site-media-stop" class="site-media-btn site-media-btn-stop" aria-label="Stop song">⏹</button>
-                <button type="button" id="site-media-mobile-dock-toggle" class="site-media-btn site-media-mobile-dock-toggle" aria-label="Toggle mobile player position" title="Toggle mobile player position" aria-pressed="false">⌖</button>
+                <button type="button" id="site-media-mobile-dock-toggle" class="site-media-btn site-media-mobile-dock-toggle" aria-label="Dock player at left bottom" title="Player centered. Tap to dock left." aria-pressed="false">◯</button>
             </div>
             <audio id="site-media-audio" preload="metadata"></audio>
         `;
