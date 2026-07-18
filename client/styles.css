@@ -2184,7 +2184,8 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   }
 
   .floating-tools {
-    top: 62px;
+    top: auto;
+    bottom: 118px;
     left: 8px;
     padding: 8px;
     gap: 8px;
