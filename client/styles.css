@@ -4869,6 +4869,10 @@ body.theme-light #logout-button:hover {
 }
 
 @media (max-width: 760px) {
+  .site-media-drag-handle {
+    display: none;
+  }
+
   .site-media-player-enabled {
     padding-bottom: 108px;
   }

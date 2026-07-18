@@ -692,6 +692,15 @@
     function restoreSiteMediaPlayerPosition(player) {
         if (!player) return;
 
+        if (window.innerWidth <= 980) {
+            player.style.left = '';
+            player.style.top = '';
+            player.style.right = '';
+            player.style.bottom = '';
+            player.style.transform = '';
+            return;
+        }
+
         try {
             const raw = localStorage.getItem(SITE_MEDIA_POSITION_KEY);
             if (!raw) return;
@@ -755,6 +764,7 @@
         };
 
         dragHandle.addEventListener('pointerdown', (event) => {
+            if (window.innerWidth <= 980) return;
             if (event.button !== 0) return;
 
             const rect = player.getBoundingClientRect();
