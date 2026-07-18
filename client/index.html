@@ -435,6 +435,7 @@
           <!-- Users Modal -->
           <div id="chat-modal" style="display: none;">
             <div class="window-controls">
+                <button id="chat-notification-sound-toggle" class="window-control-button window-control-icon" type="button" onclick="toggleChatNotificationSound()" aria-label="Mute message notifications" title="Notification sound on">🔔</button>
             
                 <button id="close-users" class="window-control-button window-control-icon" onclick="closeUsers()" aria-label="Close users">
                     <span class="window-icon window-icon-close"></span>
@@ -513,9 +514,11 @@
         let unreadMessageByUser = {};
         let unreadMessageTotal = 0;
         let onlineUsersCount = 0;
+        let chatNotificationSoundEnabled = true;
     const bookingToastTimeoutMs = 5200;
     const bookingToastExitMs = 250;
         const CHAT_EMOJIS = ['😀', '😂', '😍', '😎', '🔥', '🎵', '💯', '🙌', '🙏', '❤️', '✨', '🚀', '🎧', '🎬', '👏', '🤝'];
+    const CHAT_NOTIFICATION_SOUND_KEY = 'chatNotificationSoundEnabled';
   const API_BASE_URL = window.location.origin;
   const toAbsoluteUrl = (value) => {
       const raw = String(value || '').trim();
@@ -2224,12 +2227,21 @@ function updateUsersOnlineNotificationBadge() {
     }).length;
 
     onlineUsersCount = count;
-    if (count > 0) {
+    if (unreadMessageTotal > 0) {
+        badge.textContent = String(unreadMessageTotal);
+        badge.classList.remove('hidden');
+        badge.classList.add('is-unread');
+        badge.title = `${unreadMessageTotal} unread message${unreadMessageTotal === 1 ? '' : 's'}`;
+    } else if (count > 0) {
         badge.textContent = String(count);
         badge.classList.remove('hidden');
+        badge.classList.remove('is-unread');
+        badge.title = `${count} user${count === 1 ? '' : 's'} online`;
     } else {
         badge.textContent = '0';
         badge.classList.add('hidden');
+        badge.classList.remove('is-unread');
+        badge.removeAttribute('title');
     }
 }
 
@@ -2252,6 +2264,14 @@ function recalculateUnreadMessagesTotal() {
         return sum + nextValue;
     }, 0);
     updateMessagesNotificationBadge();
+    updateUsersOnlineNotificationBadge();
+    renderUsersModal(currentUsers);
+}
+
+function getUnreadCountForUser(userId) {
+    const id = normalizeObjectId(userId);
+    if (!id) return 0;
+    return Number(unreadMessageByUser[id]) || 0;
 }
 
 function addUnreadMessageFromSender(senderId) {
@@ -2274,6 +2294,7 @@ function clearAllUnreadMessages() {
     unreadMessageByUser = {};
     unreadMessageTotal = 0;
     updateMessagesNotificationBadge();
+    updateUsersOnlineNotificationBadge();
 }
 
 function recalculateUserPendingBookingNotifications() {
@@ -2509,9 +2530,81 @@ function handleIncomingBookingsCleared() {
         setupSocketListeners();
         initFloatingToolsDock();
         setAuthView(false);
+        initializeChatNotificationSoundPreference();
         initializeChatEmojiPicker();
         initializeChatMediaAttachmentPicker();
     });
+
+function initializeChatNotificationSoundPreference() {
+    try {
+        const rawValue = String(localStorage.getItem(CHAT_NOTIFICATION_SOUND_KEY) || '').trim().toLowerCase();
+        if (rawValue === 'off') {
+            chatNotificationSoundEnabled = false;
+        } else if (rawValue === 'on') {
+            chatNotificationSoundEnabled = true;
+        }
+    } catch (error) {
+        // Keep default sound state when storage is unavailable.
+    }
+
+    updateChatNotificationSoundToggleUI();
+}
+
+function updateChatNotificationSoundToggleUI() {
+    const button = document.getElementById('chat-notification-sound-toggle');
+    if (!button) return;
+
+    const isEnabled = !!chatNotificationSoundEnabled;
+    button.textContent = isEnabled ? '🔔' : '🔕';
+    button.classList.toggle('is-muted', !isEnabled);
+    button.setAttribute('aria-pressed', String(!isEnabled));
+    button.setAttribute('aria-label', isEnabled ? 'Mute message notifications' : 'Unmute message notifications');
+    button.title = isEnabled ? 'Notification sound on' : 'Notification sound off';
+}
+
+function toggleChatNotificationSound() {
+    chatNotificationSoundEnabled = !chatNotificationSoundEnabled;
+    updateChatNotificationSoundToggleUI();
+
+    try {
+        localStorage.setItem(CHAT_NOTIFICATION_SOUND_KEY, chatNotificationSoundEnabled ? 'on' : 'off');
+    } catch (error) {
+        // Ignore storage failures silently.
+    }
+}
+
+function playIncomingMessageNotificationSound() {
+    if (!chatNotificationSoundEnabled) return;
+
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        const context = new AudioContextClass();
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        const now = context.currentTime;
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, now);
+        oscillator.frequency.exponentialRampToValueAtTime(660, now + 0.13);
+
+        gainNode.gain.setValueAtTime(0.0001, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.085, now + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        oscillator.start(now);
+        oscillator.stop(now + 0.2);
+
+        oscillator.onended = () => {
+            context.close().catch(() => {});
+        };
+    } catch (error) {
+        // Some environments block autoplay or audio contexts without user interaction.
+    }
+}
 
   // Listen for incoming messages
   
@@ -2642,6 +2735,7 @@ function setupSocketListeners() {
 
     if (!isActiveChatForSender) {
         addUnreadMessageFromSender(incomingSenderId);
+        playIncomingMessageNotificationSound();
         return;
     }
 
@@ -3097,9 +3191,23 @@ function createUserElement(user) {
         avatar.classList.add('hidden');
     }
 
+    const nameWrap = document.createElement('span');
+    nameWrap.className = 'user-item-name-wrap';
+
     const nameSpan = document.createElement('span');
     nameSpan.className = 'user-item-name';
     nameSpan.textContent = getUserDisplayName(user);
+
+    nameWrap.appendChild(nameSpan);
+
+    const unreadCount = getUnreadCountForUser(user._id);
+    if (unreadCount > 0) {
+        const unreadBadge = document.createElement('span');
+        unreadBadge.className = 'user-item-unread-count';
+        unreadBadge.textContent = String(unreadCount);
+        unreadBadge.title = `${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`;
+        nameWrap.appendChild(unreadBadge);
+    }
 
     const statusWrap = document.createElement('span');
     statusWrap.className = 'user-status';
@@ -3115,7 +3223,7 @@ function createUserElement(user) {
     statusWrap.appendChild(statusLabel);
 
         leftWrap.appendChild(avatar);
-        leftWrap.appendChild(nameSpan);
+        leftWrap.appendChild(nameWrap);
 
         userElement.appendChild(leftWrap);
     userElement.appendChild(statusWrap);

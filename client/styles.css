@@ -616,6 +616,30 @@ body.theme-light .password-eye-toggle[aria-pressed='true'] {
   text-shadow: 0 0 8px rgba(232, 221, 248, 0.2);
 }
 
+.user-item-name-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.user-item-unread-count {
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ff204e;
+  color: #ffffff;
+  border: 1px solid rgba(70, 0, 16, 0.7);
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 .user-item-left {
   display: inline-flex;
   align-items: center;
@@ -1159,8 +1183,8 @@ body.theme-light .password-eye-toggle[aria-pressed='true'] {
   left: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 6px;
   border-radius: 16px;
   border: 1px solid rgba(200, 0, 255, 0.3);
   background: linear-gradient(170deg, rgba(22, 8, 36, 0.84), rgba(10, 0, 16, 0.84));
@@ -1185,8 +1209,8 @@ body.theme-light .password-eye-toggle[aria-pressed='true'] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 4px 4px 2px;
+  gap: 6px;
+  padding: 3px 4px 1px;
   cursor: grab;
 }
 
@@ -1216,7 +1240,7 @@ body.theme-light .floating-tools-title {
 .floating-tools-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   max-height: 600px;
   overflow: visible;
   transform-origin: top;
@@ -1262,8 +1286,13 @@ body.theme-light .floating-tools-title {
   font-size: 16px;
   letter-spacing: 0.3px;
   line-height: 1;
-  z-index: 8;
+  z-index: 2200;
   transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.floating-tools .buttons[data-tooltip]:hover,
+.floating-tools .buttons[data-tooltip]:focus-visible {
+  z-index: 2201;
 }
 
 .floating-tools .buttons[data-tooltip]::before {
@@ -1490,6 +1519,20 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   justify-content: center;
   padding: 0 4px;
   font-weight: 700;
+}
+
+.button-notification.is-unread {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18), 0 0 10px rgba(255, 32, 78, 0.5);
+}
+
+#chat-notification-sound-toggle {
+  font-size: 16px;
+  line-height: 1;
+}
+
+#chat-notification-sound-toggle.is-muted {
+  opacity: 0.7;
+  filter: saturate(0.4);
 }
 
 .profile-sidebar-backdrop {
@@ -2194,8 +2237,8 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
     right: auto;
     width: calc(100vw - 16px);
     max-width: calc(100vw - 16px);
-    padding: 8px;
-    gap: 8px;
+    padding: 6px;
+    gap: 6px;
     border-radius: 18px;
   }
 
@@ -2207,7 +2250,7 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   }
 
   .floating-tools.is-collapsed .floating-tools-handle {
-    min-height: 34px;
+    min-height: 20px;
     padding: 4px;
     gap: 6px;
   }
@@ -2219,7 +2262,7 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   .floating-tools-items {
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
@@ -2250,8 +2293,8 @@ body.theme-light .floating-tools .buttons[data-tooltip]::before {
   }
 
   .floating-tools-handle {
-    padding: 6px 6px 4px;
-    min-height: 38px;
+    padding: 4px 5px 2px;
+    min-height: 34px;
   }
 
   .floating-tools-toggle {
