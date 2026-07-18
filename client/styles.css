@@ -3341,7 +3341,8 @@ body.theme-light .profile:not(.profile-expanded) .profile-title {
 #update-profile-modal #update-profile-name,
 #update-profile-modal #update-profile-description,
 #update-profile-modal #update-profile-type,
-#update-profile-modal #update-profile-page-url {
+#update-profile-modal #update-profile-page-url,
+#update-profile-modal #update-profile-picture {
   width: 100%;
   margin: 0;
   border-radius: 12px;
@@ -3354,6 +3355,39 @@ body.theme-light .profile:not(.profile-expanded) .profile-title {
 #update-profile-modal #update-profile-description {
   min-height: 128px;
   resize: vertical;
+}
+
+#update-profile-modal #update-profile-picture {
+  cursor: pointer;
+}
+
+#update-profile-modal #update-profile-picture::file-selector-button {
+  margin-right: 10px;
+  border: 1px solid rgba(176, 124, 255, 0.5);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(153, 48, 255, 0.94), rgba(115, 29, 218, 0.94));
+  color: #ffffff;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#update-profile-modal .update-profile-image-preview-shell {
+  align-items: flex-start;
+}
+
+#update-profile-modal .update-profile-image-preview {
+  width: 100%;
+  max-height: 220px;
+  border-radius: 14px;
+  border: 1px dashed rgba(176, 124, 255, 0.45);
+  background: rgba(24, 8, 40, 0.76);
+  object-fit: cover;
+  display: none;
+}
+
+#update-profile-modal .update-profile-image-preview.has-image {
+  display: block;
 }
 
 #update-profile-modal .update-profile-modal-footer {
@@ -3408,10 +3442,21 @@ body.theme-light #update-profile-modal .update-profile-field > span {
 body.theme-light #update-profile-modal #update-profile-name,
 body.theme-light #update-profile-modal #update-profile-description,
 body.theme-light #update-profile-modal #update-profile-type,
-body.theme-light #update-profile-modal #update-profile-page-url {
+body.theme-light #update-profile-modal #update-profile-page-url,
+body.theme-light #update-profile-modal #update-profile-picture {
   border-color: rgba(122, 89, 208, 0.3);
   background: rgba(248, 245, 255, 0.96);
   color: #2a2348;
+}
+
+body.theme-light #update-profile-modal #update-profile-picture::file-selector-button {
+  border-color: rgba(122, 89, 208, 0.42);
+  background: linear-gradient(145deg, rgba(124, 76, 255, 0.92), rgba(96, 52, 204, 0.92));
+}
+
+body.theme-light #update-profile-modal .update-profile-image-preview {
+  border-color: rgba(122, 89, 208, 0.32);
+  background: rgba(248, 245, 255, 0.96);
 }
 
 body.theme-light #update-profile-modal .update-profile-cancel {

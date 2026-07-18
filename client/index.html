@@ -232,6 +232,16 @@
                 <span>Embedded Page URL</span>
                 <input type="text" id="update-profile-page-url" placeholder="Embedded Page URL (optional)" />
             </label>
+
+            <label class="update-profile-field update-profile-field-full">
+                <span>Tile Image</span>
+                <input type="file" id="update-profile-picture" accept="image/*" onchange="handleUpdateProfileImageSelection(this)" />
+            </label>
+
+            <div class="update-profile-field update-profile-field-full update-profile-image-preview-shell">
+                <span>Current / Selected Image</span>
+                <img id="update-profile-image-preview" class="update-profile-image-preview" alt="Tile preview" />
+            </div>
         </div>
         <div class="modal-footer update-profile-modal-footer">
             <button type="button" class="update-profile-save" onclick="submitProfileAdminUpdate()">Save Changes</button>
@@ -3593,6 +3603,7 @@ function renderProfiles(profiles) {
                 adminEditButton.dataset.description = profile.description || '';
                 adminEditButton.dataset.type = profile.type || 'personal';
                 adminEditButton.dataset.profilePageUrl = profilePageUrl || '';
+                adminEditButton.dataset.imageUrl = profile.imageUrl || '';
             }
         }
 
@@ -3768,6 +3779,7 @@ function openProfileAdminEditFromButton(button) {
     const currentDescription = button?.dataset?.description || '';
     const currentType = button?.dataset?.type || 'personal';
     const currentPageUrl = button?.dataset?.profilePageUrl || '';
+    const currentImageUrl = button?.dataset?.imageUrl || '';
 
     const modal = document.getElementById('update-profile-modal');
     const idField = document.getElementById('update-profile-id');
@@ -3775,6 +3787,7 @@ function openProfileAdminEditFromButton(button) {
     const descriptionField = document.getElementById('update-profile-description');
     const typeField = document.getElementById('update-profile-type');
     const pageUrlField = document.getElementById('update-profile-page-url');
+    const pictureField = document.getElementById('update-profile-picture');
 
     if (!modal || !idField || !nameField || !descriptionField || !typeField || !pageUrlField) {
         alert('Update form is unavailable right now.');
@@ -3787,13 +3800,60 @@ function openProfileAdminEditFromButton(button) {
     typeField.value = currentType || 'personal';
     pageUrlField.value = currentPageUrl;
 
+    if (pictureField) {
+        pictureField.value = '';
+    }
+
+    setUpdateProfileImagePreview(currentImageUrl);
+
     modal.style.display = 'flex';
 }
 
 function closeUpdateProfileModal() {
     const modal = document.getElementById('update-profile-modal');
     if (!modal) return;
+
+    const pictureField = document.getElementById('update-profile-picture');
+    if (pictureField) {
+        pictureField.value = '';
+    }
+
+    setUpdateProfileImagePreview('');
     modal.style.display = 'none';
+}
+
+function setUpdateProfileImagePreview(imageUrl) {
+    const preview = document.getElementById('update-profile-image-preview');
+    if (!preview) return;
+
+    const safeUrl = String(imageUrl || '').trim();
+    if (!safeUrl) {
+        preview.removeAttribute('src');
+        preview.classList.remove('has-image');
+        return;
+    }
+
+    preview.src = toAbsoluteUrl(safeUrl);
+    preview.classList.add('has-image');
+}
+
+function handleUpdateProfileImageSelection(input) {
+    const file = input?.files?.[0];
+    if (!file) {
+        return;
+    }
+
+    const preview = document.getElementById('update-profile-image-preview');
+    if (!preview) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        preview.src = String(reader.result || '');
+        preview.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
 }
 
 async function submitProfileAdminUpdate() {
@@ -3807,6 +3867,7 @@ async function submitProfileAdminUpdate() {
     const descriptionField = document.getElementById('update-profile-description');
     const typeField = document.getElementById('update-profile-type');
     const pageUrlField = document.getElementById('update-profile-page-url');
+    const pictureField = document.getElementById('update-profile-picture');
 
     if (!profileId || !nameField || !descriptionField || !typeField || !pageUrlField) {
         alert('Unable to submit profile update right now.');
@@ -3821,20 +3882,24 @@ async function submitProfileAdminUpdate() {
 
     const nextType = typeField.value.trim().toLowerCase() || 'personal';
     const nextPageUrl = pageUrlField.value.trim();
+    const nextPicture = pictureField?.files?.[0] || null;
+
+    const formData = new FormData();
+    formData.append('profileName', trimmedName);
+    formData.append('description', descriptionField.value.trim());
+    formData.append('type', nextType);
+    formData.append('profilePageUrl', nextPageUrl);
+    if (nextPicture) {
+        formData.append('profilePicture', nextPicture);
+    }
 
     try {
         const response = await fetch(`/profiles/profiles/${profileId}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json',
                 Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({
-                profileName: trimmedName,
-                description: descriptionField.value.trim(),
-                type: nextType,
-                profilePageUrl: nextPageUrl,
-            }),
+            body: formData,
         });
 
         const payload = await response.json().catch(() => ({}));
