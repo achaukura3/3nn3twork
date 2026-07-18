@@ -3411,6 +3411,69 @@ function normalizeObjectId(value) {
     return String(value);
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatProfileDescription(value) {
+    return escapeHtml(value).replace(/\r?\n/g, '<br>');
+}
+
+function buildExpandedProfileMarkup(profile) {
+    const profileName = escapeHtml(profile.dataset.profileName || 'Profile');
+    const description = formatProfileDescription(profile.dataset.profileDescription || 'No about text provided yet.');
+    const imageUrl = String(profile.dataset.profileImageUrl || '').trim()
+        ? toAbsoluteUrl(profile.dataset.profileImageUrl)
+        : 'default-placeholder.png';
+    const profileId = escapeHtml(profile.dataset.profileId || '');
+    const profileType = escapeHtml(profile.dataset.profileType || 'personal');
+    const profilePageUrl = escapeHtml(profile.dataset.profilePageUrl || '');
+    const imageDataUrl = escapeHtml(profile.dataset.profileImageUrl || '');
+    const canAdminEditProfile = profile.dataset.canAdminEdit === '1';
+    const adminEditMarkup = canAdminEditProfile
+        ? `<button class="profile-admin-edit-button" type="button" aria-label="Edit ${profileName} tile" title="Edit ${profileName} tile" onclick="openProfileAdminEditFromButton(this)" data-profile-id="${profileId}" data-profile-name="${profileName}" data-description="${escapeHtml(profile.dataset.profileDescription || '')}" data-type="${profileType}" data-profile-page-url="${profilePageUrl}" data-image-url="${imageDataUrl}"><span class="profile-admin-edit-icon" aria-hidden="true">✎</span></button>`
+        : '';
+
+    return `
+        <div class="profile-expanded-window">
+            <div class="profile-expanded-header">
+                <div class="profile-expanded-heading">
+                    <p class="profile-expanded-kicker">${profileType}</p>
+                    <div class="profile-expanded-title profile-title">${profileName}</div>
+                </div>
+                <div class="profile-expanded-header-actions">
+                    ${adminEditMarkup}
+                    <button type="button" class="profile-expanded-close" onclick="minimizeExpandedProfile()" aria-label="Close expanded profile">✖</button>
+                </div>
+            </div>
+            <div class="profile-expanded-body">
+                <div class="profile-expanded-media">
+                    <img class="profile-expanded-image" src="${imageUrl}" alt="Profile Picture" />
+                </div>
+                <div class="profile-expanded-copy">
+                    <p class="profile-expanded-label">About</p>
+                    <div class="profile-expanded-description">${description}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function restoreCompactProfileMarkup(profile) {
+    if (!profile) return;
+
+    const compactHtml = profile.dataset.compactInnerHtml;
+    if (compactHtml) {
+        profile.innerHTML = compactHtml;
+    }
+    delete profile.dataset.compactInnerHtml;
+}
+
 async function fetchProfiles() {
     try {
         const response = await fetch('/profiles/profiles', {
@@ -3506,6 +3569,12 @@ function renderProfiles(profiles) {
         const profileElement = document.createElement('div');
         profileElement.className = 'profile';
         profileElement.dataset.profileName = displayProfileName;
+        profileElement.dataset.profileId = profile._id || profile.id || '';
+        profileElement.dataset.profileDescription = profile.description || '';
+        profileElement.dataset.profileType = profile.type || 'personal';
+        profileElement.dataset.profileImageUrl = profile.imageUrl || '';
+        profileElement.dataset.profilePageUrl = profilePageUrl || '';
+        profileElement.dataset.canAdminEdit = canAdminEditProfile ? '1' : '0';
         profileElement.innerHTML = `
             <div class="profile-card-header">
                 <h3 class="profile-title">${displayProfileName}</h3>
@@ -3879,7 +3948,7 @@ async function submitProfileAdminUpdate() {
 function updateExpandedProfileTitle(profile, isExpanded) {
     if (!profile) return;
 
-    const titleElement = profile.querySelector('.profile-title');
+    const titleElement = profile.querySelector('.profile-expanded-title, .profile-title');
     const baseName = profile.dataset.profileName || 'Profile';
     if (!titleElement) return;
 
@@ -3895,34 +3964,25 @@ function expandProfile(button) {
 
     const shell = document.querySelector('.profile-view-shell');
     const profilesGrid = profile.closest('.profiles-grid');
-    const details = profile.querySelector('.profile-details');
-    const buttonText = button.querySelector('.button-text');
     const overlay = document.getElementById('profile-focus-overlay');
-
-    if (!details) return;
 
     const isOpening = !profile.classList.contains('profile-expanded');
 
     // Keep one expanded profile active at a time.
     document.querySelectorAll('.profile.profile-expanded').forEach((openProfile) => {
         if (openProfile === profile) return;
+        restoreCompactProfileMarkup(openProfile);
         openProfile.classList.remove('profile-expanded');
-
-        const openDetails = openProfile.querySelector('.profile-details');
-        if (openDetails) {
-            openDetails.classList.remove('visible');
-        }
-
-        const openButtonText = openProfile.querySelector('.button-text');
-        if (openButtonText) {
-            openButtonText.textContent = 'Open';
-        }
-
-        updateExpandedProfileTitle(openProfile, false);
     });
 
-    profile.classList.toggle('profile-expanded', isOpening);
-    details.classList.toggle('visible', isOpening);
+    if (isOpening) {
+        profile.dataset.compactInnerHtml = profile.innerHTML;
+        profile.classList.add('profile-expanded');
+        profile.innerHTML = buildExpandedProfileMarkup(profile);
+    } else {
+        restoreCompactProfileMarkup(profile);
+        profile.classList.remove('profile-expanded');
+    }
 
     if (shell) {
         const hasExpanded = !!document.querySelector('.profile.profile-expanded');
@@ -3940,10 +4000,6 @@ function expandProfile(button) {
 
     document.body.classList.toggle('profile-focus-active', !!document.querySelector('.profile.profile-expanded'));
 
-    if (buttonText) {
-        buttonText.textContent = isOpening ? 'Close' : 'Open';
-    }
-
     updateExpandedProfileTitle(profile, isOpening);
 }
 
@@ -3955,19 +4011,8 @@ function minimizeExpandedProfile() {
 
     if (!expandedProfile) return;
 
+    restoreCompactProfileMarkup(expandedProfile);
     expandedProfile.classList.remove('profile-expanded');
-    const details = expandedProfile.querySelector('.profile-details');
-    const buttonText = expandedProfile.querySelector('.button-text');
-
-    if (details) {
-        details.classList.remove('visible');
-    }
-
-    if (buttonText) {
-        buttonText.textContent = 'Open';
-    }
-
-    updateExpandedProfileTitle(expandedProfile, false);
 
     if (overlay) {
         overlay.classList.remove('active');
