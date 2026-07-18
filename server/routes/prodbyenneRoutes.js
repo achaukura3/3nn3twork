@@ -83,6 +83,20 @@ function resolveLegacyVideoUrl(input = {}) {
   return sanitizeString(match || '');
 }
 
+function resolveLegacyAudioUrl(input = {}) {
+  const candidates = [
+    input.audioUrl,
+    input.url,
+    input.src,
+    input.fileUrl,
+    input.audio,
+    input.mediaUrl,
+  ];
+
+  const match = candidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+  return sanitizeString(match || '');
+}
+
 function escapeRegex(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -96,8 +110,8 @@ function normalizeBeat(input, fallbackId) {
     key: sanitizeString(input.key),
     duration: sanitizeString(input.duration),
     plays: sanitizeString(input.plays, '0'),
-    audioUrl: sanitizeString(input.audioUrl),
-    audioMeta: sanitizeAssetMeta(input.audioMeta),
+    audioUrl: resolveLegacyAudioUrl(input),
+    audioMeta: sanitizeAssetMeta(input.audioMeta || input.meta),
     comment: sanitizeString(input.comment),
   };
 }
