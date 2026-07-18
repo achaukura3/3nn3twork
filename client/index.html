@@ -3538,19 +3538,21 @@ function renderProfiles(profiles) {
             ? `<button class="profile-overlay-open-button" onclick="openProfilePageOverlayFromButton(this)" data-overlay-url="${profilePageUrl}">Open ProdbyENNE</button>`
             : '';
         const adminEditMarkup = canAdminEditProfile
-            ? `<button class="profile-admin-edit-button" onclick="openProfileAdminEditFromButton(this)">Update Info</button>`
+            ? `<button class="profile-admin-edit-button" type="button" aria-label="Edit ${displayProfileName} tile" title="Edit ${displayProfileName} tile" onclick="openProfileAdminEditFromButton(this)"><span class="profile-admin-edit-icon" aria-hidden="true">✎</span></button>`
             : '';
 
         const profileElement = document.createElement('div');
         profileElement.className = 'profile';
         profileElement.dataset.profileName = displayProfileName;
         profileElement.innerHTML = `
-            <h3 class="profile-title">${displayProfileName}</h3>
+            <div class="profile-card-header">
+                <h3 class="profile-title">${displayProfileName}</h3>
+                ${adminEditMarkup}
+            </div>
             <img src="${imageUrl}" alt="Profile Picture" />
             <div class="profile-details">
                 <p class="profile-brief-field"><strong>About:</strong> ${profile.description || 'No about text provided yet.'}</p>
                 ${overlayButtonMarkup}
-                ${adminEditMarkup}
             </div>
             <button class="profile-expand-button" onclick="${primaryButtonAction}" data-overlay-url="${profilePageUrl || ''}" style="--clr: #7808d0">
             <span class="button__icon-wrapper">
