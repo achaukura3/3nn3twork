@@ -3131,6 +3131,9 @@ body.theme-light .profile:not(.profile-expanded) .profile-title {
   overflow: hidden;
   margin-top: 0;
   margin-bottom: 0;
+.site-media-mobile-dock-toggle {
+  display: none;
+}
   padding-top: 0;
   padding-bottom: 0;
   transition: max-height 0.36s ease, opacity 0.3s ease, transform 0.3s ease, margin 0.3s ease, padding 0.3s ease;
@@ -4836,6 +4839,24 @@ body.theme-light #logout-button:hover {
   .floating-tools {
     top: 56px;
   }
+  .site-media-mobile-dock-toggle {
+    display: inline-flex;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 14px;
+  }
+
+  .site-media-player.site-media-mobile-dock-left {
+    left: 8px;
+    right: auto;
+    transform: none;
+  }
+
+  .site-media-player.site-media-mobile-dock-center {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
 
   #chat-modal {
     top: 66px;
@@ -4871,6 +4892,9 @@ body.theme-light #logout-button:hover {
 @media (max-width: 760px) {
   .site-media-drag-handle {
     display: none;
+  }
+  .site-media-mobile-dock-toggle {
+    flex: 0 0 34px;
   }
 
   .site-media-player-enabled {

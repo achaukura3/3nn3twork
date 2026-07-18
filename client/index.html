@@ -537,12 +537,58 @@
         didAttemptApiPlaylistPreload: false,
     };
     const SITE_MEDIA_POSITION_KEY = 'siteMediaPlayerPosition';
+    const SITE_MEDIA_MOBILE_DOCK_KEY = 'siteMediaMobileDockPreset';
     const THEME_STORAGE_KEY = 'siteThemeMode';
     let themeTransitionTimeoutId = null;
     let loginMusicOverlayDismissed = false;
     const SITE_MEDIA_DEFAULT_VOLUME = 1;
     const SITE_MEDIA_FADE_OUT_MS = 1400;
     const SITE_MEDIA_FADE_TICK_MS = 50;
+
+    function loadSiteMediaMobileDockPreset() {
+        try {
+            const raw = String(localStorage.getItem(SITE_MEDIA_MOBILE_DOCK_KEY) || '').trim().toLowerCase();
+            return raw === 'left' ? 'left' : 'center';
+        } catch (error) {
+            return 'center';
+        }
+    }
+
+    function saveSiteMediaMobileDockPreset(preset) {
+        try {
+            localStorage.setItem(SITE_MEDIA_MOBILE_DOCK_KEY, preset === 'left' ? 'left' : 'center');
+        } catch (error) {
+            console.warn('Unable to persist media player mobile dock preset:', error);
+        }
+    }
+
+    function applySiteMediaMobileDockPreset(player) {
+        if (!player) return;
+
+        const isMobileViewport = window.innerWidth <= 980;
+        const preset = loadSiteMediaMobileDockPreset();
+        const isLeftPreset = preset === 'left';
+
+        player.classList.toggle('site-media-mobile-dock-left', isMobileViewport && isLeftPreset);
+        player.classList.toggle('site-media-mobile-dock-center', isMobileViewport && !isLeftPreset);
+
+        const toggleBtn = player.querySelector('#site-media-mobile-dock-toggle');
+        if (toggleBtn) {
+            toggleBtn.setAttribute('aria-pressed', String(isLeftPreset));
+            toggleBtn.setAttribute('aria-label', isLeftPreset ? 'Dock player at center bottom' : 'Dock player at left bottom');
+            toggleBtn.title = isLeftPreset ? 'Player docked left. Tap to center.' : 'Player centered. Tap to dock left.';
+        }
+    }
+
+    function toggleSiteMediaMobileDockPreset() {
+        const player = ensureSiteMediaPlayer();
+        if (!player) return;
+        if (window.innerWidth > 980) return;
+
+        const nextPreset = loadSiteMediaMobileDockPreset() === 'left' ? 'center' : 'left';
+        saveSiteMediaMobileDockPreset(nextPreset);
+        applySiteMediaMobileDockPreset(player);
+    }
 
     function applyThemeMode(isLightMode) {
         document.body.classList.toggle('theme-light', !!isLightMode);
@@ -635,6 +681,7 @@
                 <button type="button" id="site-media-toggle" class="site-media-btn" aria-label="Play or pause">▶</button>
                 <button type="button" id="site-media-next" class="site-media-btn" aria-label="Next song">⏭</button>
                 <button type="button" id="site-media-stop" class="site-media-btn site-media-btn-stop" aria-label="Stop song">⏹</button>
+                <button type="button" id="site-media-mobile-dock-toggle" class="site-media-btn site-media-mobile-dock-toggle" aria-label="Toggle mobile player position" title="Toggle mobile player position" aria-pressed="false">⌖</button>
             </div>
             <audio id="site-media-audio" preload="metadata"></audio>
         `;
@@ -647,11 +694,13 @@
         const toggleBtn = player.querySelector('#site-media-toggle');
         const nextBtn = player.querySelector('#site-media-next');
         const stopBtn = player.querySelector('#site-media-stop');
+        const mobileDockToggleBtn = player.querySelector('#site-media-mobile-dock-toggle');
 
         if (prevBtn) prevBtn.addEventListener('click', playPreviousSiteTrack);
         if (toggleBtn) toggleBtn.addEventListener('click', toggleSiteMediaPlayback);
         if (nextBtn) nextBtn.addEventListener('click', playNextSiteTrack);
         if (stopBtn) stopBtn.addEventListener('click', stopSiteMediaPlayback);
+        if (mobileDockToggleBtn) mobileDockToggleBtn.addEventListener('click', toggleSiteMediaMobileDockPreset);
 
         if (audio) {
             audio.addEventListener('play', () => {
@@ -677,6 +726,7 @@
 
         enableSiteMediaPlayerDrag(player);
         restoreSiteMediaPlayerPosition(player);
+        applySiteMediaMobileDockPreset(player);
 
         return player;
     }
@@ -698,6 +748,7 @@
             player.style.right = '';
             player.style.bottom = '';
             player.style.transform = '';
+            applySiteMediaMobileDockPreset(player);
             return;
         }
 
@@ -1803,6 +1854,12 @@ function initFloatingToolsDock() {
     window.addEventListener('resize', () => {
         applyFloatingToolsPosition();
         applyFloatingToolsCollapsed();
+
+        const siteMediaPlayer = document.getElementById('site-media-player');
+        if (siteMediaPlayer) {
+            restoreSiteMediaPlayerPosition(siteMediaPlayer);
+            applySiteMediaMobileDockPreset(siteMediaPlayer);
+        }
     });
 }
 
