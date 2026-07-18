@@ -2666,13 +2666,18 @@ body.profile-focus-active .theme {
 }
 
 .profile.profile-expanded .profile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   position: static;
   grid-column: 1 / -1;
   grid-row: 1;
   inset: auto;
-  margin: 0 0 2px;
-  padding: 0 2px 12px 0;
-  border-bottom: 1px solid rgba(232, 221, 248, 0.14);
+  margin: 0 0 6px;
+  padding: 2px 6px 12px;
+  border-bottom: 1px solid rgba(232, 221, 248, 0.18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  border-radius: 14px 14px 10px 10px;
   z-index: 2;
 }
 
@@ -2685,6 +2690,8 @@ body.profile-focus-active .theme {
   background: transparent;
   box-shadow: none;
   text-align: left;
+  font-size: clamp(1.3rem, 2vw, 1.7rem);
+  letter-spacing: 0.04em;
 }
 
 .profile.profile-expanded::after {
@@ -2757,6 +2764,10 @@ body.profile-focus-active .theme {
   overflow-y: auto;
   min-width: 0;
   border-left: 1px solid rgba(232, 221, 248, 0.12);
+}
+
+.profile.profile-expanded .profile-details .profile-brief-field {
+  margin-top: 0;
 }
 
 .profile.profile-expanded .profile-details p,
