@@ -9,12 +9,13 @@ const mongoose = require('mongoose');
 
 const cors = require('cors');
 const User = require('./models/User');
+const Message = require('./models/Message');
 const path = require('path');
 const fs = require('fs');
 
 const clientPath = path.join(__dirname, '..', 'client');
 const port = Number(process.env.PORT) || 5000;
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/3nn3twork';
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/3nn3twork';
 
 const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
@@ -83,10 +84,19 @@ app.use('/diary', diaryRoutes);
 
 
 // MongoDB Connection
-mongoose.connect(mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI && !process.env.MONGO_URI) {
+  console.error('Missing MongoDB environment variable. Set MONGODB_URI (or MONGO_URI) in Render.');
+  process.exit(1);
+}
+
+mongoose.connect(mongoUri)
+  .then(() => {
+    console.log('MongoDB connected');
+  })
+  .catch((error) => {
+    console.error(`MongoDB connection error: ${error.message}`);
+    process.exit(1);
+  });
 
 
 
