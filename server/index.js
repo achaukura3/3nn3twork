@@ -28,6 +28,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const prodbyenneRoutes = require('./routes/prodbyenneRoutes')(io);
 
 const path = require('path');
+const fs = require('fs');
 const clientPath = path.join(__dirname, '..', 'client');
 
 async function emitUsersSnapshot() {
@@ -40,9 +41,18 @@ app.use(express.json());
 app.use(cors()); 
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(clientPath, 'index.html'));
+  const indexPath = path.join(clientPath, 'index.html');
+  
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.json({ 
+      message: '3NN3TWORK API is running!',
+      status: 'healthy',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
-
 app.use(express.static(clientPath));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
