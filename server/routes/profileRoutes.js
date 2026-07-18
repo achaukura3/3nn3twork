@@ -64,33 +64,27 @@ const resolveLocalUploadPathFromUrl = (urlValue) => {
 const buildProfileImagePayloadFromUpload = async (file) => {
     if (!file) return null;
 
-    if (isCloudinaryReady()) {
-        const uploadResult = await uploadImageFromPath(file.path, {
-            folder: '3nn3twork/admin-profiles',
-        });
-
+    if (!isCloudinaryReady()) {
         await removeLocalFileIfExists(file.path);
-
-        return {
-            imageUrl: uploadResult.secure_url,
-            imageMeta: {
-                provider: 'cloudinary',
-                publicId: uploadResult.public_id,
-                resourceType: uploadResult.resource_type,
-                format: uploadResult.format,
-                bytes: uploadResult.bytes,
-            },
-        };
+        const error = new Error('Cloudinary is not configured for profile uploads. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.');
+        error.statusCode = 503;
+        throw error;
     }
 
+    const uploadResult = await uploadImageFromPath(file.path, {
+        folder: '3nn3twork/admin-profiles',
+    });
+
+    await removeLocalFileIfExists(file.path);
+
     return {
-        imageUrl: `/uploads/${file.filename}`,
+        imageUrl: uploadResult.secure_url,
         imageMeta: {
-            provider: 'local',
-            publicId: file.filename,
-            resourceType: 'image',
-            format: path.extname(file.filename).replace('.', ''),
-            bytes: file.size,
+            provider: 'cloudinary',
+            publicId: uploadResult.public_id,
+            resourceType: uploadResult.resource_type,
+            format: uploadResult.format,
+            bytes: uploadResult.bytes,
         },
     };
 };
@@ -123,7 +117,7 @@ router.post('/profiles', authenticateToken, upload.single('profilePicture'), asy
       res.status(201).json({ message: 'Profile created successfully', profile: newProfile });
   } catch (error) {
       console.error('Error creating profile:', error);
-      res.status(500).json({ message: 'Failed to create profile', error: error.message });
+      res.status(error.statusCode || 500).json({ message: 'Failed to create profile', error: error.message });
   }
 });
 
@@ -197,7 +191,7 @@ router.put('/profiles/:id', authenticateToken, upload.single('profilePicture'), 
       res.status(200).json({ message: 'Profile updated successfully', profile: updatedProfile });
   } catch (error) {
       console.error('Error updating profile:', error);
-      res.status(500).json({ message: 'Failed to update profile', error: error.message });
+      res.status(error.statusCode || 500).json({ message: 'Failed to update profile', error: error.message });
   }
 });
 router.delete('/profiles/:id', authenticateToken, async (req, res) => {

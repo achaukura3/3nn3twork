@@ -785,15 +785,9 @@ router.post('/upload', authenticateToken, requireAdmin, upload.single('file'), a
       });
     }
 
-    return res.json({
-      url: `/uploads/${req.file.filename}`,
-      meta: {
-        provider: 'local',
-        publicId: req.file.filename,
-        resourceType: getCloudinaryResourceTypeForUpload(req.body?.folder),
-        format: path.extname(req.file.filename).replace('.', ''),
-        bytes: req.file.size,
-      },
+    await removeLocalFileIfExists(req.file.path);
+    return res.status(503).json({
+      error: 'Cloudinary is not configured for media uploads. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.',
     });
   } catch (error) {
     if (req.file?.path) {

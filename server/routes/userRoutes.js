@@ -251,46 +251,34 @@ router.post('/login', async (req, res) => {
         const previousPublicId = user.profileImageMeta?.publicId;
         const previousLocalPath = resolveLocalUploadPathFromUrl(previousImageUrl);
 
-        if (isCloudinaryReady()) {
-          const uploadResult = await uploadImageFromPath(req.file.path, {
-            folder: '3nn3twork/profile-images',
-          });
-
-          user.profileImageUrl = uploadResult.secure_url;
-          user.profileImageMeta = {
-            provider: 'cloudinary',
-            publicId: uploadResult.public_id,
-            resourceType: uploadResult.resource_type,
-            format: uploadResult.format,
-            bytes: uploadResult.bytes,
-          };
-
+        if (!isCloudinaryReady()) {
           await removeLocalFileIfExists(req.file.path);
+          return res.status(503).json({
+            message: 'Cloudinary is not configured for profile image uploads. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.',
+          });
+        }
 
-          if (previousProvider === 'cloudinary' && previousPublicId && previousPublicId !== uploadResult.public_id) {
-            await deleteAssetByPublicId(previousPublicId);
-          }
+        const uploadResult = await uploadImageFromPath(req.file.path, {
+          folder: '3nn3twork/profile-images',
+        });
 
-          if (previousProvider === 'local' && previousLocalPath) {
-            await removeLocalFileIfExists(previousLocalPath);
-          }
-        } else {
-          user.profileImageUrl = `/uploads/${req.file.filename}`;
-          user.profileImageMeta = {
-            provider: 'local',
-            publicId: req.file.filename,
-            resourceType: 'image',
-            format: path.extname(req.file.filename).replace('.', ''),
-            bytes: req.file.size,
-          };
+        user.profileImageUrl = uploadResult.secure_url;
+        user.profileImageMeta = {
+          provider: 'cloudinary',
+          publicId: uploadResult.public_id,
+          resourceType: uploadResult.resource_type,
+          format: uploadResult.format,
+          bytes: uploadResult.bytes,
+        };
 
-          if (previousProvider === 'cloudinary' && previousPublicId) {
-            await deleteAssetByPublicId(previousPublicId);
-          }
+        await removeLocalFileIfExists(req.file.path);
 
-          if (previousProvider === 'local' && previousLocalPath && previousLocalPath !== req.file.path) {
-            await removeLocalFileIfExists(previousLocalPath);
-          }
+        if (previousProvider === 'cloudinary' && previousPublicId && previousPublicId !== uploadResult.public_id) {
+          await deleteAssetByPublicId(previousPublicId);
+        }
+
+        if (previousProvider === 'local' && previousLocalPath) {
+          await removeLocalFileIfExists(previousLocalPath);
         }
       }
 
